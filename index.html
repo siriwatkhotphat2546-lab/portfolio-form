@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>แบบฟอร์มเก็บข้อมูลทำพอร์ต</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FEFDF8;
+    --paper-2:#FBF8EF;
+    --ink:#1B2A4A;
+    --ink-soft:#4A5A78;
+    --margin-red:#C8443C;
+    --grid-line:#DCE6EC;
+    --gold:#C9962C;
+    --teal:#3E7C74;
+    --teal-soft:#E6F0EE;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper-2);
+    font-family:'IBM Plex Sans Thai',sans-serif;
+    color:var(--ink);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .binder{
+    max-width:760px;
+    margin:0 auto;
+    padding:0 0 60px 0;
+  }
+  .cover{
+    background:var(--paper);
+    border:1px solid #E3DCC8;
+    border-left:10px solid var(--margin-red);
+    border-radius: var(--radius);
+    margin:32px 20px 24px 20px;
+    padding:36px 32px 28px 40px;
+    position:relative;
+    box-shadow: 0 2px 0 rgba(27,42,74,0.04);
+  }
+  .stamp{
+    position:absolute;
+    top:24px;
+    right:28px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1px;
+    color:var(--teal);
+    border:2px solid var(--teal);
+    padding:5px 10px;
+    border-radius: var(--radius);
+    transform:rotate(6deg);
+    background:var(--teal-soft);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--margin-red);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  h1{
+    font-family:'Chonburi',cursive;
+    font-size:32px;
+    margin:0 0 6px 0;
+    line-height:1.3;
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:14.5px;
+    max-width:520px;
+    line-height:1.6;
+  }
+  .progress{
+    display:flex;
+    gap:6px;
+    margin-top:22px;
+    flex-wrap:wrap;
+  }
+  .progress span{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    background:var(--paper-2);
+    border:1px solid #E3DCC8;
+    padding:4px 9px;
+    border-radius:20px;
+    color:var(--ink-soft);
+  }
+  .progress span.done{
+    background:var(--teal);
+    color:#fff;
+    border-color:var(--teal);
+  }
+
+  .page{
+    background:var(--paper);
+    border:1px solid #E3DCC8;
+    border-left:10px solid var(--margin-red);
+    border-radius: var(--radius);
+    margin:0 20px 22px 20px;
+    padding:26px 30px 26px 38px;
+    position:relative;
+  }
+  .page::before{
+    content: attr(data-num);
+    position:absolute;
+    top:-13px;
+    left:34px;
+    background:var(--gold);
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    font-weight:700;
+    padding:3px 10px;
+    border-radius:3px;
+    letter-spacing:1px;
+  }
+  .page h2{
+    font-family:'Chonburi',cursive;
+    font-size:20px;
+    margin:6px 0 4px 0;
+    color:var(--ink);
+  }
+  .page .hint{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-bottom:16px;
+    line-height:1.6;
+  }
+  .row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:560px){ .row{grid-template-columns:1fr;} }
+
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:5px;
+  }
+  label .opt{
+    font-weight:400;
+    color:var(--ink-soft);
+    font-size:11.5px;
+  }
+  .field{ margin-bottom:14px; }
+  input[type=text], input[type=tel], input[type=email], input[type=date], textarea, select{
+    width:100%;
+    font-family:'IBM Plex Sans Thai',sans-serif;
+    font-size:14px;
+    padding:9px 11px;
+    border:1.5px solid #DCE6EC;
+    border-radius:var(--radius);
+    background:#FCFBF6;
+    color:var(--ink);
+    resize:vertical;
+  }
+  input:focus, textarea:focus, select:focus{
+    outline:2px solid var(--teal);
+    outline-offset:1px;
+    border-color:var(--teal);
+  }
+  textarea{ min-height:70px; line-height:1.6; }
+  fieldset{
+    border:none;
+    padding:0;
+    margin:0 0 14px 0;
+  }
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .chip{
+    font-size:13px;
+    border:1.5px solid #DCE6EC;
+    background:#FCFBF6;
+    padding:7px 13px;
+    border-radius:20px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .chip input{ display:none; }
+  .chip.checked{
+    background:var(--teal);
+    color:#fff;
+    border-color:var(--teal);
+  }
+  .table-hint{
+    background:var(--teal-soft);
+    border-radius:var(--radius);
+    padding:10px 13px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+    line-height:1.6;
+  }
+  .actions{
+    margin:24px 20px 0 20px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:'IBM Plex Sans Thai',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    padding:13px 22px;
+    border-radius:var(--radius);
+    border:none;
+    cursor:pointer;
+  }
+  #sendBtn{
+    background:var(--teal);
+    color:#fff;
+    flex:1;
+    min-width:220px;
+    font-size:15.5px;
+    box-shadow:0 2px 10px rgba(62,124,116,0.35);
+  }
+  #sendBtn:active{ transform:translateY(1px); }
+  #sendBtn:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+    transform:none;
+  }
+  #copyBtn{
+    background:var(--margin-red);
+    color:#fff;
+    flex:1;
+    min-width:220px;
+  }
+  #copyBtn:active{ transform:translateY(1px); }
+  #resetBtn{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1.5px solid #DCE6EC;
+  }
+  #sendStatus{
+    margin:10px 20px 0 20px;
+    font-size:13px;
+    font-weight:600;
+    min-height:18px;
+  }
+  #copyStatus{
+    margin:10px 20px 0 20px;
+    font-size:13px;
+    color:var(--teal);
+    font-weight:600;
+    min-height:18px;
+  }
+  .summary-box{
+    margin:16px 20px 0 20px;
+    background:var(--paper);
+    border:1.5px dashed #DCE6EC;
+    border-radius:var(--radius);
+    padding:16px 18px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    line-height:1.7;
+    white-space:pre-wrap;
+    color:var(--ink-soft);
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+  }
+  .summary-box.open{ max-height:2000px; }
+</style>
+</head>
+<body>
+<div class="binder">
+
+  <div class="cover">
+    <div class="stamp">TCAS PORTFOLIO</div>
+    <div class="eyebrow">แบบฟอร์มเก็บข้อมูลก่อนเริ่มงาน</div>
+    <h1>มาสร้างพอร์ตของน้องไปด้วยกัน 📖</h1>
+    <div class="sub">กรอกให้ครบทุกหน้านะครับ/คะ ยิ่งข้อมูลละเอียด พอร์ตยิ่งออกมาตรงตัวตนของน้องมากขึ้น ไม่ต้องรีบ ค่อยๆ กรอกได้ กดปุ่ม "คัดลอกสรุปข้อมูล" ด้านล่างสุดแล้วส่งกลับมาให้พี่ได้เลย</div>
+    <div class="progress" id="progressBar"></div>
+  </div>
+
+  <div class="page" data-num="01">
+    <h2>ข้อมูลนักเรียน</h2>
+    <div class="row">
+      <div class="field"><label>ชื่อ-นามสกุล</label><input type="text" data-k="ชื่อ-นามสกุล" placeholder="เช่น ด.ญ. สมหญิง ใจดี"></div>
+      <div class="field"><label>ชื่อเล่น</label><input type="text" data-k="ชื่อเล่น"></div>
+      <div class="field"><label>โรงเรียน</label><input type="text" data-k="โรงเรียน"></div>
+      <div class="field"><label>ระดับชั้น</label><input type="text" data-k="ระดับชั้น" placeholder="ม.6 เทอม..."></div>
+      <div class="field"><label>เบอร์โทรติดต่อ</label><input type="tel" data-k="เบอร์โทร"></div>
+      <div class="field"><label>LINE ID</label><input type="text" data-k="LINE ID"></div>
+      <div class="field" style="grid-column:1/-1;"><label>อีเมล <span class="opt">(สำหรับส่งไฟล์งาน)</span></label><input type="email" data-k="อีเมล"></div>
+    </div>
+  </div>
+
+  <div class="page" data-num="02">
+    <h2>เป้าหมาย TCAS</h2>
+    <div class="row">
+      <div class="field"><label>คณะ/สาขาอันดับ 1</label><input type="text" data-k="คณะอันดับ1"></div>
+      <div class="field"><label>มหาวิทยาลัย</label><input type="text" data-k="มหาวิทยาลัยอันดับ1"></div>
+      <div class="field"><label>คณะ/สาขาอันดับ 2 <span class="opt">(ถ้ามี)</span></label><input type="text" data-k="คณะอันดับ2"></div>
+      <div class="field"><label>มหาวิทยาลัย <span class="opt">(ถ้ามี)</span></label><input type="text" data-k="มหาวิทยาลัยอันดับ2"></div>
+      <div class="field"><label>รอบที่สมัคร</label>
+        <select data-k="รอบสมัคร">
+          <option value="">เลือกรอบ</option>
+          <option>รอบ 1 Portfolio</option>
+          <option>รอบ 2 Quota</option>
+          <option>รอบ 3 Admission</option>
+          <option>ยังไม่แน่ใจ</option>
+        </select>
+      </div>
+      <div class="field"><label>วันปิดรับสมัคร/ส่งพอร์ต</label><input type="date" data-k="กำหนดส่ง"></div>
+    </div>
+  </div>
+
+  <div class="page" data-num="03">
+    <h2>ผลการเรียน</h2>
+    <div class="row">
+      <div class="field"><label>GPAX สะสม</label><input type="text" data-k="GPAX"></div>
+      <div class="field"><label>คะแนนสอบพิเศษ <span class="opt">(TGAT/TPAT, IELTS ฯลฯ ถ้ามี)</span></label><input type="text" data-k="คะแนนสอบพิเศษ"></div>
+    </div>
+    <div class="field"><label>วิชาที่ถนัด/ชอบเป็นพิเศษ</label><textarea data-k="วิชาที่ถนัด"></textarea></div>
+  </div>
+
+  <div class="page" data-num="04">
+    <h2>กิจกรรม ผลงาน และรางวัล</h2>
+    <div class="table-hint">พิมพ์เรียงเป็นข้อๆ ก็ได้ครับ เช่น "2566 - ค่ายติวเข้มคณะแพทย์ รุ่นที่ 5 - ผ่านการคัดเลือกระดับภาค"</div>
+    <div class="field"><label>ค่าย/กิจกรรม/โครงการที่เคยเข้าร่วม</label><textarea data-k="กิจกรรมที่เข้าร่วม" style="min-height:100px;"></textarea></div>
+    <div class="field"><label>รางวัลหรือเกียรติบัตรที่เคยได้รับ</label><textarea data-k="รางวัล" style="min-height:80px;"></textarea></div>
+    <div class="field"><label>ผลงาน/โปรเจกต์ที่ภูมิใจที่สุด <span class="opt">(อธิบายสั้นๆ ว่าทำอะไร บทบาทอะไร)</span></label><textarea data-k="โปรเจกต์เด่น"></textarea></div>
+  </div>
+
+  <div class="page" data-num="05">
+    <h2>ตัวตนและเป้าหมาย</h2>
+    <div class="field"><label>ทำไมถึงอยากเรียนคณะ/สาขานี้</label><textarea data-k="เหตุผลเลือกคณะ"></textarea></div>
+    <div class="field"><label>จุดแข็งของตัวเอง 3 ข้อ</label><textarea data-k="จุดแข็ง"></textarea></div>
+    <div class="field"><label>เป้าหมายในอนาคต 5-10 ปีข้างหน้า</label><textarea data-k="เป้าหมายอนาคต"></textarea></div>
+  </div>
+
+  <div class="page" data-num="06">
+    <h2>ผลงานที่มีอยู่แล้ว</h2>
+    <div class="field"><label>ลิงก์ไฟล์รูปภาพ/ผลงาน <span class="opt">(Google Drive, ลิงก์อื่นๆ)</span></label><input type="text" data-k="ลิงก์ไฟล์ผลงาน" placeholder="วางลิงก์ที่นี่"></div>
+    <div class="field"><label>รายการไฟล์ที่จะส่งมาเพิ่มเติม</label><textarea data-k="รายการไฟล์เพิ่มเติม" placeholder="เช่น ใบเกียรติบัตร 5 ใบ, รูปกิจกรรม 10 รูป, รูปหน้าตรง 1 รูป"></textarea></div>
+  </div>
+
+  <div class="page" data-num="07">
+    <h2>สไตล์ที่ต้องการ</h2>
+    <div class="field">
+      <label>โทนสีที่ชอบ</label>
+      <div class="chips" data-chip-group="โทนสีที่ชอบ">
+        <label class="chip"><input type="checkbox" value="พาสเทล">พาสเทล</label>
+        <label class="chip"><input type="checkbox" value="มินิมอล ขาว-ดำ">มินิมอล ขาว-ดำ</label>
+        <label class="chip"><input type="checkbox" value="สีสันสดใส">สีสันสดใส</label>
+        <label class="chip"><input type="checkbox" value="โทนเรียบหรู">โทนเรียบหรู</label>
+        <label class="chip"><input type="checkbox" value="ธีมตามคณะ">ธีมตามคณะ</label>
+      </div>
+    </div>
+    <div class="field"><label>พอร์ตตัวอย่างที่ชอบ <span class="opt">(แนบลิงก์หรือบอกชื่อสไตล์)</span></label><input type="text" data-k="พอร์ตตัวอย่างที่ชอบ"></div>
+    <div class="field"><label>สิ่งที่ไม่ชอบ/อยากให้เลี่ยง</label><textarea data-k="สิ่งที่ไม่ชอบ"></textarea></div>
+  </div>
+
+  <div class="page" data-num="08">
+    <h2>แพ็กเกจที่เลือก</h2>
+    <div class="field">
+      <label>แพ็กเกจ</label>
+      <div class="chips" data-chip-group="แพ็กเกจ" data-single="true">
+        <label class="chip"><input type="checkbox" value="พื้นฐาน (จัดหน้าอย่างเดียว)">พื้นฐาน (จัดหน้าอย่างเดียว)</label>
+        <label class="chip"><input type="checkbox" value="มาตรฐาน (จัดหน้า + ปรับคำ)">มาตรฐาน (จัดหน้า + ปรับคำ)</label>
+        <label class="chip"><input type="checkbox" value="พรีเมียม (ให้คำปรึกษาเต็มรูปแบบ)">พรีเมียม (ให้คำปรึกษาเต็มรูปแบบ)</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>จำนวนหน้าโดยประมาณ</label><input type="text" data-k="จำนวนหน้า"></div>
+      <div class="field"><label>งบประมาณที่ตั้งไว้</label><input type="text" data-k="งบประมาณ"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="sendBtn">🚀 ส่งข้อมูล</button>
+    <button id="copyBtn">📋 คัดลอกสรุปข้อมูลทั้งหมด</button>
+    <button id="resetBtn">ล้างข้อมูล</button>
+  </div>
+  <div id="sendStatus"></div>
+  <div id="copyStatus"></div>
+  <div class="summary-box" id="summaryBox"></div>
+
+</div>
+
+<script>
+  const fields = document.querySelectorAll('[data-k]');
+  const chipGroups = document.querySelectorAll('[data-chip-group]');
+  const sections = ["ข้อมูลนักเรียน","เป้าหมาย","ผลการเรียน","กิจกรรม","ตัวตน","ผลงานเดิม","สไตล์","แพ็กเกจ"];
+  const progressBar = document.getElementById('progressBar');
+  sections.forEach(s=>{
+    const el = document.createElement('span');
+    el.textContent = s;
+    el.dataset.section = s;
+    progressBar.appendChild(el);
+  });
+
+  chipGroups.forEach(group=>{
+    const single = group.dataset.single === "true";
+    group.querySelectorAll('.chip').forEach(chip=>{
+      chip.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const input = chip.querySelector('input');
+        if(single){
+          group.querySelectorAll('.chip').forEach(c=>{c.classList.remove('checked'); c.querySelector('input').checked=false;});
+          input.checked = true;
+          chip.classList.add('checked');
+        } else {
+          input.checked = !input.checked;
+          chip.classList.toggle('checked', input.checked);
+        }
+      });
+    });
+  });
+
+  function buildSummary(){
+    let lines = [];
+    lines.push("=== สรุปข้อมูลทำพอร์ต ===");
+    fields.forEach(f=>{
+      const val = f.value.trim();
+      if(val) lines.push(f.dataset.k + ": " + val);
+    });
+    chipGroups.forEach(group=>{
+      const checked = [...group.querySelectorAll('input:checked')].map(i=>i.value);
+      if(checked.length) lines.push(group.dataset.chipGroup + ": " + checked.join(", "));
+    });
+    return lines.join("\n");
+  }
+
+  function buildDataObject(){
+    const data = {};
+    fields.forEach(f=>{
+      data[f.dataset.k] = f.value.trim();
+    });
+    chipGroups.forEach(group=>{
+      const checked = [...group.querySelectorAll('input:checked')].map(i=>i.value);
+      data[group.dataset.chipGroup] = checked.join(", ");
+    });
+    return data;
+  }
+
+  const SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby5gIKwaMUV80q4xyqg3acWLas0Dl5qhCYJUhQ8s4B1I-aZF2p3CVVYdiDSyVh2CiZM9Q/exec';
+
+  document.getElementById('sendBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('sendBtn');
+    const status = document.getElementById('sendStatus');
+    const data = buildDataObject();
+    btn.disabled = true;
+    status.style.color = 'var(--ink-soft)';
+    status.textContent = "กำลังส่งข้อมูล...";
+    try{
+      await fetch(SHEET_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(data)
+      });
+      status.style.color = 'var(--teal)';
+      status.textContent = "ส่งข้อมูลเรียบร้อยแล้ว ขอบคุณครับ/ค่ะ ✅";
+    }catch(e){
+      status.style.color = 'var(--margin-red)';
+      status.textContent = "ส่งข้อมูลไม่สำเร็จ กรุณากดปุ่ม \"คัดลอกสรุปข้อมูลทั้งหมด\" แล้วส่งข้อมูลให้พี่ทางช่องทางอื่นแทนนะครับ/คะ";
+    }
+    setTimeout(()=>{ btn.disabled = false; }, 3000);
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', async ()=>{
+    const text = buildSummary();
+    const box = document.getElementById('summaryBox');
+    box.textContent = text;
+    box.classList.add('open');
+    try{
+      await navigator.clipboard.writeText(text);
+      document.getElementById('copyStatus').textContent = "คัดลอกแล้ว! ส่งกลับมาทาง LINE หรืออีเมลได้เลยครับ ✅";
+    }catch(e){
+      document.getElementById('copyStatus').textContent = "คัดลอกอัตโนมัติไม่ได้ กรุณากดเลือกข้อความด้านล่างแล้วคัดลอกเอง";
+    }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    if(confirm("ล้างข้อมูลทั้งหมดที่กรอกไว้?")){
+      fields.forEach(f=>f.value='');
+      chipGroups.forEach(g=>g.querySelectorAll('.chip').forEach(c=>{c.classList.remove('checked'); c.querySelector('input').checked=false;}));
+      document.getElementById('summaryBox').classList.remove('open');
+      document.getElementById('copyStatus').textContent='';
+    }
+  });
+</script>
+</body>
+</html>
