@@ -2,10 +2,11 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>แบบฟอร์มเก็บข้อมูลทำพอร์ต</title>
+<title>แบบฟอร์มเก็บข้อมูลทำพอร์ต | TCAS Portfolio Form</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 <style>
   :root{
     --paper:#FEFDF8;
@@ -17,11 +18,13 @@
     --gold:#C9962C;
     --teal:#3E7C74;
     --teal-soft:#E6F0EE;
-    --radius:4px;
+    --warn:#B5641E;
+    --warn-soft:#FCEFE0;
+    --radius:8px;
   }
   *{box-sizing:border-box;}
+  html,body{margin:0;}
   body{
-    margin:0;
     background:var(--paper-2);
     font-family:'IBM Plex Sans Thai',sans-serif;
     color:var(--ink);
@@ -29,475 +32,1252 @@
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-size: 28px 28px;
-  }
-  .binder{
-    max-width:760px;
-    margin:0 auto;
-    padding:0 0 60px 0;
-  }
-  .cover{
-    background:var(--paper);
-    border:1px solid #E3DCC8;
-    border-left:10px solid var(--margin-red);
-    border-radius: var(--radius);
-    margin:32px 20px 24px 20px;
-    padding:36px 32px 28px 40px;
-    position:relative;
-    box-shadow: 0 2px 0 rgba(27,42,74,0.04);
-  }
-  .stamp{
-    position:absolute;
-    top:24px;
-    right:28px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:1px;
-    color:var(--teal);
-    border:2px solid var(--teal);
-    padding:5px 10px;
-    border-radius: var(--radius);
-    transform:rotate(6deg);
-    background:var(--teal-soft);
-  }
-  .eyebrow{
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    letter-spacing:2px;
-    color:var(--margin-red);
-    text-transform:uppercase;
-    margin-bottom:8px;
-  }
-  h1{
-    font-family:'Chonburi',cursive;
-    font-size:32px;
-    margin:0 0 6px 0;
-    line-height:1.3;
-  }
-  .sub{
-    color:var(--ink-soft);
-    font-size:14.5px;
-    max-width:520px;
-    line-height:1.6;
-  }
-  .progress{
-    display:flex;
-    gap:6px;
-    margin-top:22px;
-    flex-wrap:wrap;
-  }
-  .progress span{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    background:var(--paper-2);
-    border:1px solid #E3DCC8;
-    padding:4px 9px;
-    border-radius:20px;
-    color:var(--ink-soft);
-  }
-  .progress span.done{
-    background:var(--teal);
-    color:#fff;
-    border-color:var(--teal);
+    -webkit-text-size-adjust:100%;
   }
 
-  .page{
+  /* ---------- Language gate ---------- */
+  .gate{
+    position:fixed; inset:0; z-index:1000;
+    background:linear-gradient(160deg,#FEFDF8,#EFEAD9);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .gate.hidden{ display:none; }
+  .gate-card{
     background:var(--paper);
     border:1px solid #E3DCC8;
-    border-left:10px solid var(--margin-red);
-    border-radius: var(--radius);
-    margin:0 20px 22px 20px;
-    padding:26px 30px 26px 38px;
-    position:relative;
+    border-top:8px solid var(--teal);
+    border-radius:16px;
+    max-width:440px; width:100%;
+    padding:30px 24px 28px;
+    box-shadow:0 12px 40px rgba(27,42,74,0.14);
+    text-align:center;
+  }
+  .gate-card .eyebrow{ justify-content:center; }
+  .gate-card h1{ font-size:25px; margin:6px 0 6px; }
+  .gate-card p.lead{ color:var(--ink-soft); font-size:14.5px; line-height:1.6; margin:0 0 20px; }
+  .lang-btns{ display:flex; flex-direction:column; gap:12px; }
+  .lang-btn{
+    display:flex; align-items:center; gap:12px;
+    text-align:left;
+    padding:15px 18px; font-size:16px; font-weight:600;
+    border:2px solid var(--teal); border-radius:12px;
+    background:var(--paper); color:var(--ink); cursor:pointer;
+    transition:transform .08s, background .15s;
+  }
+  .lang-btn:active{ transform:scale(0.98); }
+  .lang-btn:hover{ background:var(--teal-soft); }
+  .lang-btn .flag{ font-size:26px; }
+  .lang-btn small{ display:block; font-weight:400; font-size:12.5px; color:var(--ink-soft); }
+  .warn-box{
+    background:var(--warn-soft);
+    border:1.5px solid #E9C79E;
+    border-left:5px solid var(--warn);
+    color:var(--warn);
+    border-radius:var(--radius);
+    padding:12px 14px; margin-top:18px;
+    font-size:13px; line-height:1.6; text-align:left;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(254,253,248,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid #E3DCC8;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 16px;
+    gap:10px;
+  }
+  .topbar .brand{ font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:1px; color:var(--teal); }
+  .lang-toggle{
+    display:flex; border:1.5px solid var(--teal); border-radius:20px; overflow:hidden;
+    font-size:12.5px; font-weight:600; background:var(--paper);
+  }
+  .lang-toggle button{
+    padding:6px 14px; border:none; background:transparent; color:var(--teal); cursor:pointer; font-weight:600;
+  }
+  .lang-toggle button.active{ background:var(--teal); color:#fff; }
+
+  .binder{ max-width:780px; margin:0 auto; padding:0 0 90px 0; }
+
+  .cover{
+    background:var(--paper); border:1px solid #E3DCC8;
+    border-left:10px solid var(--margin-red); border-radius: var(--radius);
+    margin:24px 16px 20px; padding:30px 26px 24px 34px;
+    position:relative; box-shadow: 0 2px 0 rgba(27,42,74,0.04);
+  }
+  .stamp{
+    position:absolute; top:20px; right:22px;
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:1px;
+    color:var(--teal); border:2px solid var(--teal); padding:5px 9px; border-radius:6px;
+    transform:rotate(6deg); background:var(--teal-soft);
+  }
+  .eyebrow{
+    display:flex; align-items:center; gap:6px;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:2px;
+    color:var(--margin-red); text-transform:uppercase; margin-bottom:8px;
+  }
+  h1{ font-family:'Chonburi',cursive; font-size:29px; margin:0 0 6px; line-height:1.3; }
+  .sub{ color:var(--ink-soft); font-size:14.5px; line-height:1.6; }
+
+  /* progress */
+  .progress-wrap{ margin-top:20px; }
+  .progress-track{ height:12px; background:var(--paper-2); border:1px solid #E3DCC8; border-radius:20px; overflow:hidden; }
+  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--teal),var(--gold)); border-radius:20px; transition:width .3s ease; }
+  .progress-label{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); margin-top:7px; }
+
+  .page{
+    background:var(--paper); border:1px solid #E3DCC8;
+    border-left:10px solid var(--margin-red); border-radius: var(--radius);
+    margin:0 16px 20px; padding:24px 24px 22px 30px; position:relative;
   }
   .page::before{
     content: attr(data-num);
-    position:absolute;
-    top:-13px;
-    left:34px;
-    background:var(--gold);
-    color:#fff;
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    font-weight:700;
-    padding:3px 10px;
-    border-radius:3px;
-    letter-spacing:1px;
+    position:absolute; top:-13px; left:26px;
+    background:var(--gold); color:#fff; font-family:'JetBrains Mono',monospace;
+    font-size:12px; font-weight:700; padding:3px 10px; border-radius:6px; letter-spacing:1px;
   }
-  .page h2{
-    font-family:'Chonburi',cursive;
-    font-size:20px;
-    margin:6px 0 4px 0;
-    color:var(--ink);
-  }
-  .page .hint{
-    font-size:13px;
-    color:var(--ink-soft);
-    margin-bottom:16px;
-    line-height:1.6;
-  }
-  .row{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
-  }
-  @media (max-width:560px){ .row{grid-template-columns:1fr;} }
+  .page h2{ font-family:'Chonburi',cursive; font-size:19px; margin:6px 0 4px; color:var(--ink); display:flex; align-items:center; gap:8px; }
+  .page .hint{ font-size:13px; color:var(--ink-soft); margin-bottom:16px; line-height:1.6; }
 
-  label{
-    display:block;
-    font-size:13px;
-    font-weight:600;
-    color:var(--ink);
-    margin-bottom:5px;
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:560px){ .row{grid-template-columns:1fr;} }
+  .row.three{ grid-template-columns:1fr 1fr 1fr; }
+  @media (max-width:560px){ .row.three{grid-template-columns:1fr;} }
+
+  label{ display:block; font-size:13px; font-weight:600; color:var(--ink); margin-bottom:5px; }
+  label.req::after{ content:" *"; color:var(--margin-red); }
+  .field{ margin-bottom:13px; }
+  input[type=text], input[type=tel], input[type=email], input[type=date], input[type=number], input[type=url], textarea, select{
+    width:100%; font-family:'IBM Plex Sans Thai',sans-serif; font-size:15px;
+    padding:11px 12px; border:1.5px solid #DCE6EC; border-radius:var(--radius);
+    background:#FCFBF6; color:var(--ink); resize:vertical;
   }
-  label .opt{
-    font-weight:400;
-    color:var(--ink-soft);
-    font-size:11.5px;
-  }
-  .field{ margin-bottom:14px; }
-  input[type=text], input[type=tel], input[type=email], input[type=date], textarea, select{
-    width:100%;
-    font-family:'IBM Plex Sans Thai',sans-serif;
-    font-size:14px;
-    padding:9px 11px;
-    border:1.5px solid #DCE6EC;
-    border-radius:var(--radius);
-    background:#FCFBF6;
-    color:var(--ink);
-    resize:vertical;
-  }
-  input:focus, textarea:focus, select:focus{
-    outline:2px solid var(--teal);
-    outline-offset:1px;
-    border-color:var(--teal);
-  }
-  textarea{ min-height:70px; line-height:1.6; }
-  fieldset{
-    border:none;
-    padding:0;
-    margin:0 0 14px 0;
-  }
-  .chips{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-  }
-  .chip{
-    font-size:13px;
-    border:1.5px solid #DCE6EC;
-    background:#FCFBF6;
-    padding:7px 13px;
-    border-radius:20px;
-    cursor:pointer;
-    user-select:none;
-  }
+  input:focus, textarea:focus, select:focus{ outline:2px solid var(--teal); outline-offset:1px; border-color:var(--teal); }
+  input.invalid, textarea.invalid{ border-color:var(--margin-red); background:#FDF2F1; }
+  textarea{ min-height:72px; line-height:1.6; }
+  .subhint{ font-size:12px; color:var(--ink-soft); margin-top:4px; line-height:1.55; }
+
+  fieldset{ border:none; padding:0; margin:0 0 13px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ font-size:13.5px; border:1.5px solid #DCE6EC; background:#FCFBF6; padding:9px 14px; border-radius:20px; cursor:pointer; user-select:none; }
   .chip input{ display:none; }
-  .chip.checked{
-    background:var(--teal);
-    color:#fff;
-    border-color:var(--teal);
-  }
+  .chip.checked{ background:var(--teal); color:#fff; border-color:var(--teal); }
+
   .table-hint{
-    background:var(--teal-soft);
-    border-radius:var(--radius);
-    padding:10px 13px;
-    font-size:12.5px;
-    color:var(--ink-soft);
-    margin-bottom:10px;
-    line-height:1.6;
+    background:var(--teal-soft); border-radius:var(--radius); padding:10px 13px;
+    font-size:12.5px; color:var(--ink-soft); margin-bottom:12px; line-height:1.6;
   }
-  .actions{
-    margin:24px 20px 0 20px;
-    display:flex;
-    gap:12px;
-    flex-wrap:wrap;
+  .divider{ border:none; border-top:1px dashed #E3DCC8; margin:16px 0; }
+  .group-title{ font-weight:700; font-size:14px; color:var(--teal); margin:4px 0 10px; }
+
+  /* ---------- buttons ---------- */
+  button{ font-family:'IBM Plex Sans Thai',sans-serif; font-weight:600; font-size:14.5px; padding:12px 18px; border-radius:var(--radius); border:none; cursor:pointer; }
+  .btn-add{
+    background:var(--teal-soft); color:var(--teal); border:1.5px dashed var(--teal);
+    font-size:13.5px; padding:10px 15px; border-radius:20px; width:100%; margin-top:6px;
   }
-  button{
-    font-family:'IBM Plex Sans Thai',sans-serif;
-    font-weight:600;
-    font-size:14.5px;
-    padding:13px 22px;
-    border-radius:var(--radius);
-    border:none;
-    cursor:pointer;
+  .btn-add:active{ transform:translateY(1px); }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); border:1.5px solid #DCE6EC; font-size:12.5px; padding:6px 11px; border-radius:16px; }
+  .btn-danger{ background:#FBEAE8; color:var(--margin-red); border:1px solid #EFC9C4; font-size:12.5px; padding:6px 11px; border-radius:16px; }
+
+  /* ---------- image uploader ---------- */
+  .uploader{ margin-top:8px; }
+  .drop{
+    border:2px dashed #CBD8DE; border-radius:var(--radius); background:#FCFBF6;
+    padding:16px; text-align:center; color:var(--ink-soft); font-size:13.5px; cursor:pointer;
+    transition:background .15s;
   }
-  #sendBtn{
-    background:var(--teal);
-    color:#fff;
-    flex:1;
-    min-width:220px;
-    font-size:15.5px;
-    box-shadow:0 2px 10px rgba(62,124,116,0.35);
-  }
+  .drop:hover{ background:var(--teal-soft); }
+  .drop .plus{ font-size:22px; display:block; margin-bottom:4px; }
+  .thumbs{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-top:12px; }
+  .thumb{ border:1px solid #E3DCC8; border-radius:var(--radius); background:var(--paper); overflow:hidden; display:flex; flex-direction:column; }
+  .thumb .imgwrap{ position:relative; aspect-ratio:4/3; background:#F0ECDE; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb .fname{ font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink-soft); padding:8px; text-align:center; word-break:break-all; }
+  .thumb .meta{ padding:8px; display:flex; flex-direction:column; gap:6px; }
+  .thumb .meta input, .thumb .meta textarea{ font-size:12.5px; padding:7px 8px; }
+  .thumb .bar{ display:flex; gap:5px; padding:0 8px 8px; flex-wrap:wrap; }
+  .thumb .bar button{ font-size:11px; padding:4px 8px; border-radius:12px; }
+  .move-btn{ background:var(--paper-2); border:1px solid #DCE6EC; color:var(--ink-soft); }
+  .cover-preview{ margin-top:10px; max-width:180px; }
+  .cover-preview img{ width:100%; border-radius:var(--radius); border:1px solid #E3DCC8; display:block; }
+
+  /* dynamic sub-blocks */
+  .sub-block{ border:1px solid #E7E0CD; border-radius:var(--radius); padding:14px; margin-bottom:14px; background:#FCFBF6; }
+  .sub-block .sub-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+  .sub-block .sub-head .st{ font-weight:700; font-size:14.5px; color:var(--ink); }
+
+  /* ---------- actions ---------- */
+  .actions{ margin:26px 16px 0; display:flex; gap:12px; flex-wrap:wrap; }
+  #sendBtn{ background:var(--teal); color:#fff; flex:1; min-width:100%; font-size:16px; padding:15px; box-shadow:0 3px 12px rgba(62,124,116,0.35); }
   #sendBtn:active{ transform:translateY(1px); }
-  #sendBtn:disabled{
-    opacity:0.6;
-    cursor:not-allowed;
-    transform:none;
-  }
-  #copyBtn{
-    background:var(--margin-red);
-    color:#fff;
-    flex:1;
-    min-width:220px;
-  }
-  #copyBtn:active{ transform:translateY(1px); }
-  #resetBtn{
-    background:transparent;
-    color:var(--ink-soft);
-    border:1.5px solid #DCE6EC;
-  }
-  #sendStatus{
-    margin:10px 20px 0 20px;
-    font-size:13px;
-    font-weight:600;
-    min-height:18px;
-  }
-  #copyStatus{
-    margin:10px 20px 0 20px;
-    font-size:13px;
-    color:var(--teal);
-    font-weight:600;
-    min-height:18px;
-  }
+  #sendBtn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+  #copyBtn{ background:var(--margin-red); color:#fff; flex:1; min-width:220px; }
+  #resetBtn{ background:transparent; color:var(--ink-soft); border:1.5px solid #DCE6EC; }
+  #sendStatus{ margin:12px 16px 0; font-size:13.5px; font-weight:600; min-height:18px; line-height:1.5; }
+  #copyStatus{ margin:10px 16px 0; font-size:13px; color:var(--teal); font-weight:600; min-height:18px; }
   .summary-box{
-    margin:16px 20px 0 20px;
-    background:var(--paper);
-    border:1.5px dashed #DCE6EC;
-    border-radius:var(--radius);
-    padding:16px 18px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    line-height:1.7;
-    white-space:pre-wrap;
-    color:var(--ink-soft);
-    max-height:0;
-    overflow:hidden;
-    transition:max-height 0.3s ease;
+    margin:16px 16px 0; background:var(--paper); border:1.5px dashed #DCE6EC; border-radius:var(--radius);
+    padding:16px 16px; font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.7;
+    white-space:pre-wrap; color:var(--ink-soft); max-height:0; overflow:hidden; transition:max-height .3s ease;
   }
-  .summary-box.open{ max-height:2000px; }
+  .summary-box.open{ max-height:2600px; overflow:auto; }
+  .save-tag{ margin:6px 16px 0; font-size:11.5px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; }
+
+  @media (max-width:560px){
+    .page{ padding:22px 16px 20px 22px; margin:0 10px 18px; }
+    .cover{ margin:18px 10px 18px; padding:26px 18px 22px 24px; }
+    h1{ font-size:25px; }
+    .actions{ margin:22px 10px 0; }
+  }
 </style>
 </head>
 <body>
+
+<!-- ===================== LANGUAGE GATE ===================== -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="eyebrow">✦ TCAS PORTFOLIO ✦</div>
+    <h1 data-th="เลือกภาษาก่อนเริ่มกัน" data-en="Choose your language">เลือกภาษาก่อนเริ่มกัน</h1>
+    <p class="lead" data-th="น้องอยากทำพอร์ต (แฟ้มสะสมผลงาน) เป็นภาษาอะไรดีครับ/คะ? เลือกได้เลย เปลี่ยนทีหลังก็ได้นะ"
+       data-en="Which language would you like your portfolio to be in? You can change this anytime later.">
+       น้องอยากทำพอร์ต (แฟ้มสะสมผลงาน) เป็นภาษาอะไรดีครับ/คะ? เลือกได้เลย เปลี่ยนทีหลังก็ได้นะ</p>
+    <div class="lang-btns">
+      <button class="lang-btn" data-choose="th">
+        <span class="flag">🇹🇭</span>
+        <span>ภาษาไทย<small>ทำพอร์ตและกรอกข้อมูลเป็นภาษาไทย</small></span>
+      </button>
+      <button class="lang-btn" data-choose="en">
+        <span class="flag">🇬🇧</span>
+        <span>English<small>Make the portfolio & fill the form in English</small></span>
+      </button>
+    </div>
+    <div class="warn-box" id="gateWarn">
+      ⚠️ <b data-th="หมายเหตุสำหรับคนที่เลือกอังกฤษ" data-en="Note if you choose English">หมายเหตุสำหรับคนที่เลือกอังกฤษ</b>:
+      <span data-th="หากเลือกทำพอร์ตเป็นภาษาอังกฤษ น้องอาจต้องเตรียมตัว “สัมภาษณ์เข้ามหาวิทยาลัยเป็นภาษาอังกฤษ” ด้วยนะครับ/คะ ควรมั่นใจว่าสื่อสารภาษาอังกฤษได้ก่อนเลือกข้อนี้"
+            data-en="If you choose an English portfolio, you may also need to prepare for a university interview in English. Please make sure you're comfortable communicating in English before choosing this option.">
+        หากเลือกทำพอร์ตเป็นภาษาอังกฤษ น้องอาจต้องเตรียมตัว “สัมภาษณ์เข้ามหาวิทยาลัยเป็นภาษาอังกฤษ” ด้วยนะครับ/คะ ควรมั่นใจว่าสื่อสารภาษาอังกฤษได้ก่อนเลือกข้อนี้
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TOP BAR ===================== -->
+<div class="topbar">
+  <span class="brand">TCAS PORTFOLIO</span>
+  <div class="lang-toggle" id="langToggle">
+    <button data-set="th">ไทย</button>
+    <button data-set="en">EN</button>
+  </div>
+</div>
+
 <div class="binder">
 
+  <!-- COVER / INTRO -->
   <div class="cover">
     <div class="stamp">TCAS PORTFOLIO</div>
-    <div class="eyebrow">แบบฟอร์มเก็บข้อมูลก่อนเริ่มงาน</div>
-    <h1>มาสร้างพอร์ตของน้องไปด้วยกัน 📖</h1>
-    <div class="sub">กรอกให้ครบทุกหน้านะครับ/คะ ยิ่งข้อมูลละเอียด พอร์ตยิ่งออกมาตรงตัวตนของน้องมากขึ้น ไม่ต้องรีบ ค่อยๆ กรอกได้ กดปุ่ม "คัดลอกสรุปข้อมูล" ด้านล่างสุดแล้วส่งกลับมาให้พี่ได้เลย</div>
-    <div class="progress" id="progressBar"></div>
+    <div class="eyebrow" data-th="แบบฟอร์มเก็บข้อมูลก่อนเริ่มงาน" data-en="Info form before we start">แบบฟอร์มเก็บข้อมูลก่อนเริ่มงาน</div>
+    <h1 data-th="มาสร้างพอร์ตของน้องไปด้วยกัน 📖" data-en="Let's build your portfolio together 📖">มาสร้างพอร์ตของน้องไปด้วยกัน 📖</h1>
+    <div class="sub" data-th="กรอกให้ครบทุกหน้านะครับ/คะ ยิ่งข้อมูลละเอียด พอร์ตยิ่งออกมาตรงตัวตนของน้องมากขึ้น ไม่ต้องรีบ ค่อยๆ กรอกได้ ข้อมูลจะถูกบันทึกไว้อัตโนมัติ ปิดแล้วกลับมากรอกต่อได้เลย ✨"
+         data-en="Fill in every page — the more detail, the more your portfolio reflects the real you. No rush! Your answers save automatically, so you can close and come back anytime. ✨">
+         กรอกให้ครบทุกหน้านะครับ/คะ ยิ่งข้อมูลละเอียด พอร์ตยิ่งออกมาตรงตัวตนของน้องมากขึ้น ไม่ต้องรีบ ค่อยๆ กรอกได้ ข้อมูลจะถูกบันทึกไว้อัตโนมัติ ปิดแล้วกลับมากรอกต่อได้เลย ✨</div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label"><span id="progressPct">0%</span> · <span data-th="กรอกแล้ว" data-en="completed">กรอกแล้ว</span></div>
+    </div>
   </div>
 
+  <!-- 01 COVER PHOTO -->
   <div class="page" data-num="01">
-    <h2>ข้อมูลนักเรียน</h2>
-    <div class="row">
-      <div class="field"><label>ชื่อ-นามสกุล</label><input type="text" data-k="ชื่อ-นามสกุล" placeholder="เช่น ด.ญ. สมหญิง ใจดี"></div>
-      <div class="field"><label>ชื่อเล่น</label><input type="text" data-k="ชื่อเล่น"></div>
-      <div class="field"><label>โรงเรียน</label><input type="text" data-k="โรงเรียน"></div>
-      <div class="field"><label>ระดับชั้น</label><input type="text" data-k="ระดับชั้น" placeholder="ม.6 เทอม..."></div>
-      <div class="field"><label>เบอร์โทรติดต่อ</label><input type="tel" data-k="เบอร์โทร"></div>
-      <div class="field"><label>LINE ID</label><input type="text" data-k="LINE ID"></div>
-      <div class="field" style="grid-column:1/-1;"><label>อีเมล <span class="opt">(สำหรับส่งไฟล์งาน)</span></label><input type="email" data-k="อีเมล"></div>
+    <h2>📸 <span data-th="หน้าปก & รูปโปรไฟล์" data-en="Cover & Profile Photo">หน้าปก & รูปโปรไฟล์</span></h2>
+    <div class="hint" data-th="อัปโหลดรูปหน้าปก/รูปนักเรียนที่อยากใช้ในพอร์ต (รูปสวยๆ หน้าตรงหรือรูปที่ชอบก็ได้) — เห็น preview ทันที"
+         data-en="Upload the cover / profile photo you'd like in your portfolio (a nice portrait or a favourite shot) — preview shows instantly.">
+         อัปโหลดรูปหน้าปก/รูปนักเรียนที่อยากใช้ในพอร์ต (รูปสวยๆ หน้าตรงหรือรูปที่ชอบก็ได้) — เห็น preview ทันที</div>
+    <div class="field">
+      <label data-th="รูปหน้าปก / รูปโปรไฟล์" data-en="Cover / Profile photo">รูปหน้าปก / รูปโปรไฟล์</label>
+      <input type="file" id="coverInput" accept="image/*" style="display:none">
+      <div class="drop" id="coverDrop"><span class="plus">＋</span><span data-th="แตะเพื่อเลือกรูป" data-en="Tap to choose a photo">แตะเพื่อเลือกรูป</span></div>
+      <div class="cover-preview" id="coverPreview"></div>
     </div>
   </div>
 
+  <!-- 02 PROFILE -->
   <div class="page" data-num="02">
-    <h2>เป้าหมาย TCAS</h2>
+    <h2>🧑‍🎓 <span data-th="ประวัติส่วนตัว" data-en="About Me / Profile">ประวัติส่วนตัว</span></h2>
     <div class="row">
-      <div class="field"><label>คณะ/สาขาอันดับ 1</label><input type="text" data-k="คณะอันดับ1"></div>
-      <div class="field"><label>มหาวิทยาลัย</label><input type="text" data-k="มหาวิทยาลัยอันดับ1"></div>
-      <div class="field"><label>คณะ/สาขาอันดับ 2 <span class="opt">(ถ้ามี)</span></label><input type="text" data-k="คณะอันดับ2"></div>
-      <div class="field"><label>มหาวิทยาลัย <span class="opt">(ถ้ามี)</span></label><input type="text" data-k="มหาวิทยาลัยอันดับ2"></div>
-      <div class="field"><label>รอบที่สมัคร</label>
-        <select data-k="รอบสมัคร">
-          <option value="">เลือกรอบ</option>
-          <option>รอบ 1 Portfolio</option>
-          <option>รอบ 2 Quota</option>
-          <option>รอบ 3 Admission</option>
-          <option>ยังไม่แน่ใจ</option>
-        </select>
-      </div>
-      <div class="field"><label>วันปิดรับสมัคร/ส่งพอร์ต</label><input type="date" data-k="กำหนดส่ง"></div>
+      <div class="field"><label class="req" data-th="ชื่อ-นามสกุล" data-en="Full name">ชื่อ-นามสกุล</label><input type="text" data-k="ชื่อ-นามสกุล" data-ph-th="เช่น นางสาวสมหญิง ใจดี" data-ph-en="e.g. Somying Jaidee"></div>
+      <div class="field"><label data-th="ชื่อเล่น" data-en="Nickname">ชื่อเล่น</label><input type="text" data-k="ชื่อเล่น"></div>
+      <div class="field"><label data-th="วัน/เดือน/ปีเกิด" data-en="Date of birth">วัน/เดือน/ปีเกิด</label><input type="date" data-k="วันเกิด"></div>
+      <div class="field"><label data-th="อายุ" data-en="Age">อายุ</label><input type="number" data-k="อายุ" min="10" max="30"></div>
     </div>
+    <div class="row three">
+      <div class="field"><label data-th="เชื้อชาติ" data-en="Ethnicity">เชื้อชาติ</label><input type="text" data-k="เชื้อชาติ" data-ph-th="เช่น ไทย" data-ph-en="e.g. Thai"></div>
+      <div class="field"><label data-th="สัญชาติ" data-en="Nationality">สัญชาติ</label><input type="text" data-k="สัญชาติ" data-ph-th="เช่น ไทย" data-ph-en="e.g. Thai"></div>
+      <div class="field"><label data-th="ศาสนา" data-en="Religion">ศาสนา</label><input type="text" data-k="ศาสนา"></div>
+    </div>
+    <div class="field"><label data-th="แผนการเรียน" data-en="Study plan / track">แผนการเรียน</label><input type="text" data-k="แผนการเรียน" data-ph-th="เช่น วิทย์-คณิต / ศิลป์-ภาษา" data-ph-en="e.g. Science-Math / Arts-Language"></div>
+    <div class="field"><label data-th="งานอดิเรก" data-en="Hobbies">งานอดิเรก</label><input type="text" data-k="งานอดิเรก"></div>
+    <div class="field"><label data-th="ความสามารถพิเศษ / ทักษะเด่น" data-en="Special skills / talents">ความสามารถพิเศษ / ทักษะเด่น</label><textarea data-k="ความสามารถพิเศษ"></textarea></div>
+    <div class="field"><label data-th="ภาษาที่สื่อสารได้" data-en="Languages you can communicate in">ภาษาที่สื่อสารได้</label><input type="text" data-k="ภาษาที่สื่อสารได้" data-ph-th="เช่น ไทย, อังกฤษ (พอใช้), จีน" data-ph-en="e.g. Thai, English (intermediate), Chinese"></div>
+    <div class="field"><label data-th="คติประจำใจ (ไม่บังคับ)" data-en="Personal motto (optional)">คติประจำใจ (ไม่บังคับ)</label><input type="text" data-k="คติประจำใจ"></div>
   </div>
 
+  <!-- 03 CONTACT -->
   <div class="page" data-num="03">
-    <h2>ผลการเรียน</h2>
+    <h2>📞 <span data-th="ช่องทางติดต่อ" data-en="Contact">ช่องทางติดต่อ</span></h2>
+    <div class="hint" data-th="ขอช่องทางติดต่ออย่างน้อย 1 อย่างนะครับ/คะ เผื่อพี่ต้องสอบถามเพิ่มเติม" data-en="Please leave at least one contact so we can reach you if needed.">ขอช่องทางติดต่ออย่างน้อย 1 อย่างนะครับ/คะ เผื่อพี่ต้องสอบถามเพิ่มเติม</div>
     <div class="row">
-      <div class="field"><label>GPAX สะสม</label><input type="text" data-k="GPAX"></div>
-      <div class="field"><label>คะแนนสอบพิเศษ <span class="opt">(TGAT/TPAT, IELTS ฯลฯ ถ้ามี)</span></label><input type="text" data-k="คะแนนสอบพิเศษ"></div>
+      <div class="field"><label data-th="เบอร์โทรติดต่อ" data-en="Phone">เบอร์โทรติดต่อ</label><input type="tel" data-k="เบอร์โทร"></div>
+      <div class="field"><label data-th="LINE ID" data-en="LINE ID">LINE ID</label><input type="text" data-k="LINE ID"></div>
+      <div class="field" style="grid-column:1/-1;"><label data-th="อีเมล (สำหรับส่งไฟล์งาน)" data-en="Email (for sending files)">อีเมล (สำหรับส่งไฟล์งาน)</label><input type="email" data-k="อีเมล"></div>
+      <div class="field"><label data-th="Instagram (ถ้ามี)" data-en="Instagram (if any)">Instagram (ถ้ามี)</label><input type="text" data-k="Instagram"></div>
+      <div class="field"><label data-th="Facebook (ถ้ามี)" data-en="Facebook (if any)">Facebook (ถ้ามี)</label><input type="text" data-k="Facebook"></div>
     </div>
-    <div class="field"><label>วิชาที่ถนัด/ชอบเป็นพิเศษ</label><textarea data-k="วิชาที่ถนัด"></textarea></div>
   </div>
 
+  <!-- 04 FAMILY & ADDRESS -->
   <div class="page" data-num="04">
-    <h2>กิจกรรม ผลงาน และรางวัล</h2>
-    <div class="table-hint">พิมพ์เรียงเป็นข้อๆ ก็ได้ครับ เช่น "2566 - ค่ายติวเข้มคณะแพทย์ รุ่นที่ 5 - ผ่านการคัดเลือกระดับภาค"</div>
-    <div class="field"><label>ค่าย/กิจกรรม/โครงการที่เคยเข้าร่วม</label><textarea data-k="กิจกรรมที่เข้าร่วม" style="min-height:100px;"></textarea></div>
-    <div class="field"><label>รางวัลหรือเกียรติบัตรที่เคยได้รับ</label><textarea data-k="รางวัล" style="min-height:80px;"></textarea></div>
-    <div class="field"><label>ผลงาน/โปรเจกต์ที่ภูมิใจที่สุด <span class="opt">(อธิบายสั้นๆ ว่าทำอะไร บทบาทอะไร)</span></label><textarea data-k="โปรเจกต์เด่น"></textarea></div>
-  </div>
-
-  <div class="page" data-num="05">
-    <h2>ตัวตนและเป้าหมาย</h2>
-    <div class="field"><label>ทำไมถึงอยากเรียนคณะ/สาขานี้</label><textarea data-k="เหตุผลเลือกคณะ"></textarea></div>
-    <div class="field"><label>จุดแข็งของตัวเอง 3 ข้อ</label><textarea data-k="จุดแข็ง"></textarea></div>
-    <div class="field"><label>เป้าหมายในอนาคต 5-10 ปีข้างหน้า</label><textarea data-k="เป้าหมายอนาคต"></textarea></div>
-  </div>
-
-  <div class="page" data-num="06">
-    <h2>ผลงานที่มีอยู่แล้ว</h2>
-    <div class="field"><label>ลิงก์ไฟล์รูปภาพ/ผลงาน <span class="opt">(Google Drive, ลิงก์อื่นๆ)</span></label><input type="text" data-k="ลิงก์ไฟล์ผลงาน" placeholder="วางลิงก์ที่นี่"></div>
-    <div class="field"><label>รายการไฟล์ที่จะส่งมาเพิ่มเติม</label><textarea data-k="รายการไฟล์เพิ่มเติม" placeholder="เช่น ใบเกียรติบัตร 5 ใบ, รูปกิจกรรม 10 รูป, รูปหน้าตรง 1 รูป"></textarea></div>
-  </div>
-
-  <div class="page" data-num="07">
-    <h2>สไตล์ที่ต้องการ</h2>
-    <div class="field">
-      <label>โทนสีที่ชอบ</label>
-      <div class="chips" data-chip-group="โทนสีที่ชอบ">
-        <label class="chip"><input type="checkbox" value="พาสเทล">พาสเทล</label>
-        <label class="chip"><input type="checkbox" value="มินิมอล ขาว-ดำ">มินิมอล ขาว-ดำ</label>
-        <label class="chip"><input type="checkbox" value="สีสันสดใส">สีสันสดใส</label>
-        <label class="chip"><input type="checkbox" value="โทนเรียบหรู">โทนเรียบหรู</label>
-        <label class="chip"><input type="checkbox" value="ธีมตามคณะ">ธีมตามคณะ</label>
-      </div>
-    </div>
-    <div class="field"><label>พอร์ตตัวอย่างที่ชอบ <span class="opt">(แนบลิงก์หรือบอกชื่อสไตล์)</span></label><input type="text" data-k="พอร์ตตัวอย่างที่ชอบ"></div>
-    <div class="field"><label>สิ่งที่ไม่ชอบ/อยากให้เลี่ยง</label><textarea data-k="สิ่งที่ไม่ชอบ"></textarea></div>
-  </div>
-
-  <div class="page" data-num="08">
-    <h2>แพ็กเกจที่เลือก</h2>
-    <div class="field">
-      <label>แพ็กเกจ</label>
-      <div class="chips" data-chip-group="แพ็กเกจ" data-single="true">
-        <label class="chip"><input type="checkbox" value="พื้นฐาน (จัดหน้าอย่างเดียว)">พื้นฐาน (จัดหน้าอย่างเดียว)</label>
-        <label class="chip"><input type="checkbox" value="มาตรฐาน (จัดหน้า + ปรับคำ)">มาตรฐาน (จัดหน้า + ปรับคำ)</label>
-        <label class="chip"><input type="checkbox" value="พรีเมียม (ให้คำปรึกษาเต็มรูปแบบ)">พรีเมียม (ให้คำปรึกษาเต็มรูปแบบ)</label>
-      </div>
-    </div>
+    <h2>👨‍👩‍👧 <span data-th="ครอบครัว & ที่อยู่" data-en="Family & Address">ครอบครัว & ที่อยู่</span></h2>
     <div class="row">
-      <div class="field"><label>จำนวนหน้าโดยประมาณ</label><input type="text" data-k="จำนวนหน้า"></div>
-      <div class="field"><label>งบประมาณที่ตั้งไว้</label><input type="text" data-k="งบประมาณ"></div>
+      <div class="field"><label data-th="ชื่อบิดา" data-en="Father's name">ชื่อบิดา</label><input type="text" data-k="ชื่อบิดา"></div>
+      <div class="field"><label data-th="อาชีพบิดา" data-en="Father's occupation">อาชีพบิดา</label><input type="text" data-k="อาชีพบิดา"></div>
+      <div class="field"><label data-th="ชื่อมารดา" data-en="Mother's name">ชื่อมารดา</label><input type="text" data-k="ชื่อมารดา"></div>
+      <div class="field"><label data-th="อาชีพมารดา" data-en="Mother's occupation">อาชีพมารดา</label><input type="text" data-k="อาชีพมารดา"></div>
+      <div class="field"><label data-th="จำนวนพี่น้อง (ไม่บังคับ)" data-en="Number of siblings (optional)">จำนวนพี่น้อง (ไม่บังคับ)</label><input type="text" data-k="จำนวนพี่น้อง" data-ph-th="เช่น มีพี่ 1 น้อง 1" data-ph-en="e.g. 1 older, 1 younger"></div>
+    </div>
+    <div class="field"><label data-th="ที่อยู่ปัจจุบัน" data-en="Current address">ที่อยู่ปัจจุบัน</label><textarea data-k="ที่อยู่ปัจจุบัน"></textarea></div>
+  </div>
+
+  <!-- 05 TCAS TARGET -->
+  <div class="page" data-num="05">
+    <h2>🎯 <span data-th="เป้าหมาย TCAS — อยากเข้าคณะ/สาขา/มหาวิทยาลัยอะไร" data-en="TCAS Target — which faculty/major/university?">เป้าหมาย TCAS — อยากเข้าคณะ/สาขา/มหาวิทยาลัยอะไร</span></h2>
+    <div class="hint" data-th="ข้อนี้สำคัญมาก บอกให้ชัดว่าอยากเข้า “คณะอะไร สาขาไหน มหาวิทยาลัยอะไร” เพราะพอร์ตและ SOP จะถูกเขียนให้ตรงกับที่นี่เลย"
+         data-en="This is very important — tell us exactly which faculty, major and university you're aiming for. Your portfolio & SOP will be tailored to it.">
+         ข้อนี้สำคัญมาก บอกให้ชัดว่าอยากเข้า “คณะอะไร สาขาไหน มหาวิทยาลัยอะไร” เพราะพอร์ตและ SOP จะถูกเขียนให้ตรงกับที่นี่เลย</div>
+    <div class="row">
+      <div class="field"><label class="req" data-th="คณะ/สาขา อันดับ 1" data-en="Faculty/Major — 1st choice">คณะ/สาขา อันดับ 1</label><input type="text" data-k="คณะอันดับ1" data-ph-th="เช่น คณะแพทยศาสตร์" data-ph-en="e.g. Faculty of Medicine"></div>
+      <div class="field"><label class="req" data-th="มหาวิทยาลัย อันดับ 1" data-en="University — 1st choice">มหาวิทยาลัย อันดับ 1</label><input type="text" data-k="มหาวิทยาลัยอันดับ1"></div>
+      <div class="field"><label data-th="คณะ/สาขา อันดับ 2 (ถ้ามี)" data-en="Faculty/Major — 2nd choice (if any)">คณะ/สาขา อันดับ 2 (ถ้ามี)</label><input type="text" data-k="คณะอันดับ2"></div>
+      <div class="field"><label data-th="มหาวิทยาลัย อันดับ 2 (ถ้ามี)" data-en="University — 2nd choice (if any)">มหาวิทยาลัย อันดับ 2 (ถ้ามี)</label><input type="text" data-k="มหาวิทยาลัยอันดับ2"></div>
     </div>
   </div>
 
+  <!-- 06 EDUCATION -->
+  <div class="page" data-num="06">
+    <h2>🏫 <span data-th="ประวัติการศึกษา & ผลการเรียน" data-en="Education & Grades">ประวัติการศึกษา & ผลการเรียน</span></h2>
+    <div class="field"><label data-th="โรงเรียนประถมศึกษา" data-en="Primary school">โรงเรียนประถมศึกษา</label><input type="text" data-k="โรงเรียนประถม"></div>
+    <div class="field"><label data-th="โรงเรียนมัธยมศึกษาตอนต้น" data-en="Junior high school">โรงเรียนมัธยมศึกษาตอนต้น</label><input type="text" data-k="โรงเรียนมัธยมต้น"></div>
+    <div class="row">
+      <div class="field"><label data-th="โรงเรียนมัธยมศึกษาตอนปลาย" data-en="Senior high school">โรงเรียนมัธยมศึกษาตอนปลาย</label><input type="text" data-k="โรงเรียนมัธยมปลาย"></div>
+      <div class="field"><label data-th="แผนการเรียน (ม.ปลาย)" data-en="Track (senior high)">แผนการเรียน (ม.ปลาย)</label><input type="text" data-k="แผนการเรียนมัธยมปลาย" data-ph-th="เช่น วิทย์-คณิต" data-ph-en="e.g. Science-Math"></div>
+      <div class="field"><label data-th="ระดับชั้นปัจจุบัน" data-en="Current grade">ระดับชั้นปัจจุบัน</label><input type="text" data-k="ระดับชั้น" data-ph-th="เช่น ม.6" data-ph-en="e.g. Grade 12"></div>
+      <div class="field"><label data-th="GPAX สะสม" data-en="Cumulative GPAX">GPAX สะสม</label><input type="text" data-k="GPAX"></div>
+    </div>
+    <div class="field"><label data-th="คะแนนสอบพิเศษ (TGAT/TPAT, IELTS ฯลฯ ถ้ามี)" data-en="Special test scores (TGAT/TPAT, IELTS, etc. if any)">คะแนนสอบพิเศษ (TGAT/TPAT, IELTS ฯลฯ ถ้ามี)</label><textarea data-k="คะแนนสอบพิเศษ" data-ph-th="เช่น TGAT 80, IELTS 6.5" data-ph-en="e.g. TGAT 80, IELTS 6.5"></textarea></div>
+    <div class="field"><label data-th="วิชาที่ถนัด/ชอบเป็นพิเศษ" data-en="Favourite / strongest subjects">วิชาที่ถนัด/ชอบเป็นพิเศษ</label><textarea data-k="วิชาที่ถนัด"></textarea></div>
+  </div>
+
+  <!-- 07 ACTIVITIES (Category A) -->
+  <div class="page" data-num="07">
+    <h2>🎪 <span data-th="กิจกรรม & ผลงาน (พร้อมรูป)" data-en="Activities & Works (with photos)">กิจกรรม & ผลงาน (พร้อมรูป)</span></h2>
+    <div class="table-hint" data-th="แยกเป็นหัวข้อย่อยตามประเภทกิจกรรม แต่ละหัวข้ออัปโหลดได้หลายรูป และใส่คำอธิบายใต้ภาพ (ทำอะไร บทบาทอะไร ปีไหน) — เพราะพอร์ตจริงต้องมีคำบรรยายใต้รูป เพิ่มหัวข้อย่อยเองได้ด้วยปุ่มด้านล่าง"
+         data-en="Grouped by activity type. Each topic can hold many photos, each with a short caption (what you did, your role, the year) — real portfolios need captions under photos. You can add your own topics too.">
+      แยกเป็นหัวข้อย่อยตามประเภทกิจกรรม แต่ละหัวข้ออัปโหลดได้หลายรูป และใส่คำอธิบายใต้ภาพ (ทำอะไร บทบาทอะไร ปีไหน) — เพราะพอร์ตจริงต้องมีคำบรรยายใต้รูป เพิ่มหัวข้อย่อยเองได้ด้วยปุ่มด้านล่าง</div>
+    <div id="activityList"></div>
+    <button class="btn-add" id="addActivityBtn">＋ <span data-th="เพิ่มหัวข้อย่อยเอง" data-en="Add your own topic">เพิ่มหัวข้อย่อยเอง</span></button>
+  </div>
+
+  <!-- 08 CERTIFICATES (Category B) -->
+  <div class="page" data-num="08">
+    <h2>🏅 <span data-th="เกียรติบัตร & รางวัล (พร้อมรูป)" data-en="Certificates & Awards (with photos)">เกียรติบัตร & รางวัล (พร้อมรูป)</span></h2>
+    <div class="table-hint" data-th="อัปโหลดรูปเกียรติบัตร/รางวัลได้หลายรูป แต่ละรูปใส่ชื่อรางวัล + ปีที่ได้ + คำอธิบายสั้นๆ"
+         data-en="Upload multiple certificate/award photos. For each: award name + year + a short note.">
+      อัปโหลดรูปเกียรติบัตร/รางวัลได้หลายรูป แต่ละรูปใส่ชื่อรางวัล + ปีที่ได้ + คำอธิบายสั้นๆ</div>
+    <div class="uploader">
+      <input type="file" id="certInput" accept="image/*" multiple style="display:none">
+      <div class="drop" id="certDrop"><span class="plus">＋</span><span data-th="แตะเพื่อเลือกรูปเกียรติบัตร (เลือกหลายรูปได้)" data-en="Tap to add certificate photos (multiple allowed)">แตะเพื่อเลือกรูปเกียรติบัตร (เลือกหลายรูปได้)</span></div>
+      <div class="thumbs" id="certThumbs"></div>
+    </div>
+  </div>
+
+  <!-- 09 SOP -->
+  <div class="page" data-num="09">
+    <h2>✍️ <span data-th="Statement of Purpose (เรียงความแนะนำตัว)" data-en="Statement of Purpose">Statement of Purpose (เรียงความแนะนำตัว)</span></h2>
+    <div class="table-hint" data-th="เขียนคร่าวๆ ก่อนก็ได้น้า เดี๋ยวพี่เอาไปเกลาและเสริมข้อความให้อีกที แล้วส่งกลับมาให้อ่านว่าโอเคไหม 💛 กรอกทีละหัวข้อตามคำใบ้ได้เลย"
+         data-en="A rough draft is totally fine — we'll polish and expand it, then send it back for you to check 💛 Just answer each part using the hints below.">
+      เขียนคร่าวๆ ก่อนก็ได้น้า เดี๋ยวพี่เอาไปเกลาและเสริมข้อความให้อีกที แล้วส่งกลับมาให้อ่านว่าโอเคไหม 💛 กรอกทีละหัวข้อตามคำใบ้ได้เลย</div>
+
+    <div class="field">
+      <label data-th="1) Introduction — บทนำ: แนะนำตัวและแรงบันดาลใจ" data-en="1) Introduction — introduce yourself & your inspiration">1) Introduction — บทนำ: แนะนำตัวและแรงบันดาลใจ</label>
+      <textarea data-k="SOP_1_Introduction" style="min-height:110px"></textarea>
+      <div class="subhint" data-th="แนะนำตัวสั้นๆ (ชื่อ เรียนสายอะไร) + จุดเริ่มต้น/แรงบันดาลใจที่ทำให้อยากเรียนสาขานี้ เช่น ความชอบวัยเด็ก เหตุการณ์ประทับใจ ปัญหาสังคมที่อยากแก้ หรือบุคคลต้นแบบ"
+           data-en="Introduce yourself briefly (name, study track) + the origin/inspiration that made you want this major — a childhood passion, a memorable event, a social problem you want to solve, or a role model.">
+        แนะนำตัวสั้นๆ (ชื่อ เรียนสายอะไร) + จุดเริ่มต้น/แรงบันดาลใจที่ทำให้อยากเรียนสาขานี้ เช่น ความชอบวัยเด็ก เหตุการณ์ประทับใจ ปัญหาสังคมที่อยากแก้ หรือบุคคลต้นแบบ</div>
+    </div>
+
+    <div class="field">
+      <label data-th="2) Academic Background & Skills — พื้นฐานการศึกษาและทักษะ" data-en="2) Academic Background & Skills">2) Academic Background & Skills — พื้นฐานการศึกษาและทักษะ</label>
+      <textarea data-k="SOP_2_Academic" style="min-height:110px"></textarea>
+      <div class="subhint" data-th="เชื่อมสิ่งที่เรียนมาเข้ากับคณะที่จะเข้า เช่น เรียนสายวิทย์-คณิต ชอบวิชาอะไรเป็นพิเศษ ทักษะวิชาการ (การทดลอง/การคำนวณ) หรือทักษะเสริม (ภาษา คอมพิวเตอร์ ศิลปะ) ที่จะเป็นประโยชน์ต่อการเรียน"
+           data-en="Connect what you've studied to the faculty — e.g. Science-Math track, favourite subjects, academic skills (experiments/calculation) or extra skills (languages, computing, art) useful for this major.">
+        เชื่อมสิ่งที่เรียนมาเข้ากับคณะที่จะเข้า เช่น เรียนสายวิทย์-คณิต ชอบวิชาอะไรเป็นพิเศษ ทักษะวิชาการ (การทดลอง/การคำนวณ) หรือทักษะเสริม (ภาษา คอมพิวเตอร์ ศิลปะ) ที่จะเป็นประโยชน์ต่อการเรียน</div>
+    </div>
+
+    <div class="field">
+      <label data-th="3) Experiences & Activities — ประสบการณ์และกิจกรรมที่โดดเด่น" data-en="3) Experiences & Activities">3) Experiences & Activities — ประสบการณ์และกิจกรรมที่โดดเด่น</label>
+      <textarea data-k="SOP_3_Experiences" style="min-height:110px"></textarea>
+      <div class="subhint" data-th="เล่ากิจกรรมนอกห้องเรียน/โปรเจกต์/การแข่งขัน/งานอดิเรกที่สอดคล้องกับคณะ เน้นว่า “ได้เรียนรู้อะไร” เช่น การทำงานเป็นทีม การแก้ปัญหาเฉพาะหน้า ความอดทน (เลือกเฉพาะอันที่เด่นที่สุด ไม่ต้องเล่าทุกอัน)"
+           data-en="Share standout activities/projects/competitions/hobbies relevant to the faculty. Focus on what you learned — teamwork, problem-solving, perseverance (pick only the strongest, no need to list everything).">
+        เล่ากิจกรรมนอกห้องเรียน/โปรเจกต์/การแข่งขัน/งานอดิเรกที่สอดคล้องกับคณะ เน้นว่า “ได้เรียนรู้อะไร” เช่น การทำงานเป็นทีม การแก้ปัญหาเฉพาะหน้า ความอดทน (เลือกเฉพาะอันที่เด่นที่สุด ไม่ต้องเล่าทุกอัน)</div>
+    </div>
+
+    <div class="field">
+      <label data-th="4) Why this University / Faculty — ทำไมต้องคณะนี้ & มหาวิทยาลัยนี้" data-en="4) Why this University / Faculty">4) Why this University / Faculty — ทำไมต้องคณะนี้ & มหาวิทยาลัยนี้</label>
+      <textarea data-k="SOP_4_WhyUni" style="min-height:110px"></textarea>
+      <div class="subhint" data-th="สำคัญมากในไทย! หาข้อมูลมหาวิทยาลัย/คณะแล้วบอกเหตุผลที่อยากเข้าที่นี่ เช่น ประทับใจหลักสูตรตรงไหน ชอบวิสัยทัศน์คณะ มีรุ่นพี่/อาจารย์ที่ชื่นชม เพื่อให้กรรมการเห็นว่าเราศึกษาข้อมูลมาจริงและตั้งใจจริง"
+           data-en="Very important in Thailand! Research the university/faculty and give real reasons: what impresses you about the curriculum, the faculty's vision, alumni/professors you admire — show the committee you did your homework and truly want this.">
+        สำคัญมากในไทย! หาข้อมูลมหาวิทยาลัย/คณะแล้วบอกเหตุผลที่อยากเข้าที่นี่ เช่น ประทับใจหลักสูตรตรงไหน ชอบวิสัยทัศน์คณะ มีรุ่นพี่/อาจารย์ที่ชื่นชม เพื่อให้กรรมการเห็นว่าเราศึกษาข้อมูลมาจริงและตั้งใจจริง</div>
+    </div>
+
+    <div class="field">
+      <label data-th="5) Personal Strengths — จุดแข็ง/อุปนิสัยที่เหมาะกับวิชาชีพนี้" data-en="5) Personal Strengths">5) Personal Strengths — จุดแข็ง/อุปนิสัยที่เหมาะกับวิชาชีพนี้</label>
+      <textarea data-k="SOP_5_Strengths" style="min-height:90px"></textarea>
+      <div class="subhint" data-th="นิสัยส่วนตัวที่เหมาะกับสายนี้ เช่น ละเอียดรอบคอบ (สายสุขภาพ/บัญชี) ความคิดสร้างสรรค์ (ศิลปะ/สถาปัตย์) ความเป็นผู้นำ ฯลฯ"
+           data-en="Personal traits that fit this career — e.g. meticulous (health/accounting), creative (art/architecture), strong leadership, etc.">
+        นิสัยส่วนตัวที่เหมาะกับสายนี้ เช่น ละเอียดรอบคอบ (สายสุขภาพ/บัญชี) ความคิดสร้างสรรค์ (ศิลปะ/สถาปัตย์) ความเป็นผู้นำ ฯลฯ</div>
+    </div>
+
+    <div class="field">
+      <label data-th="6) Future Goals & Conclusion — เป้าหมายอนาคตและบทสรุป" data-en="6) Future Goals & Conclusion">6) Future Goals & Conclusion — เป้าหมายอนาคตและบทสรุป</label>
+      <textarea data-k="SOP_6_FutureGoals" style="min-height:100px"></textarea>
+      <div class="subhint" data-th="เรียนจบแล้วอยากประกอบอาชีพอะไร หรืออยากนำความรู้ไปพัฒนาสังคม/ต่อยอดอย่างไรในอนาคต แล้วปิดท้ายด้วยความตั้งใจ"
+           data-en="What career you want after graduating, or how you'll use your knowledge to develop society/build on it — then close with your commitment.">
+        เรียนจบแล้วอยากประกอบอาชีพอะไร หรืออยากนำความรู้ไปพัฒนาสังคม/ต่อยอดอย่างไรในอนาคต แล้วปิดท้ายด้วยความตั้งใจ</div>
+    </div>
+  </div>
+
+  <!-- 10 IDENTITY (quick) -->
+  <div class="page" data-num="10">
+    <h2>💡 <span data-th="ตัวตนและเป้าหมาย (ตอบสั้นๆ)" data-en="Identity & Goals (quick answers)">ตัวตนและเป้าหมาย (ตอบสั้นๆ)</span></h2>
+    <div class="hint" data-th="ตอบสั้นๆ ก็ได้ ใช้เสริมกับ SOP ด้านบน" data-en="Short answers are fine — these complement the SOP above.">ตอบสั้นๆ ก็ได้ ใช้เสริมกับ SOP ด้านบน</div>
+    <div class="field"><label data-th="จุดแข็งของตัวเอง 3 ข้อ" data-en="Your top 3 strengths">จุดแข็งของตัวเอง 3 ข้อ</label><textarea data-k="จุดแข็ง"></textarea></div>
+    <div class="field"><label data-th="สิ่งที่ภูมิใจที่สุด / โปรเจกต์เด่น" data-en="What you're most proud of / standout project">สิ่งที่ภูมิใจที่สุด / โปรเจกต์เด่น</label><textarea data-k="โปรเจกต์เด่น"></textarea></div>
+  </div>
+
+  <!-- 11 CUSTOM SECTIONS -->
+  <div class="page" data-num="11">
+    <h2>➕ <span data-th="อยากใส่หัวข้ออื่นเพิ่มไหม?" data-en="Want to add your own sections?">อยากใส่หัวข้ออื่นเพิ่มไหม?</span></h2>
+    <div class="hint" data-th="ถ้ามีเรื่องที่อยากใส่ในพอร์ตแต่ไม่มีช่องให้ กดเพิ่มหัวข้อของตัวเองได้เลย ใส่รูปประกอบก็ได้ (ไม่บังคับ)"
+         data-en="If there's something you'd like in your portfolio but there's no field for it, add your own section here — with optional photos.">
+      ถ้ามีเรื่องที่อยากใส่ในพอร์ตแต่ไม่มีช่องให้ กดเพิ่มหัวข้อของตัวเองได้เลย ใส่รูปประกอบก็ได้ (ไม่บังคับ)</div>
+    <div id="customList"></div>
+    <button class="btn-add" id="addCustomBtn">＋ <span data-th="เพิ่มหัวข้อ" data-en="Add a section">เพิ่มหัวข้อ</span></button>
+  </div>
+
+  <!-- 12 REFERENCES / STYLE -->
+  <div class="page" data-num="12">
+    <h2>🎨 <span data-th="สไตล์ & พอร์ตตัวอย่างที่ชอบ (เรฟ)" data-en="Style & Reference portfolios">สไตล์ & พอร์ตตัวอย่างที่ชอบ (เรฟ)</span></h2>
+    <div class="hint" data-th="ช่วยให้พี่ทำพอร์ตออกมาตรงใจน้องมากขึ้น วางลิงก์ตัวอย่างได้หลายลิงก์ อัปโหลดรูปสไตล์ที่ชอบได้ และบอกว่า “ชอบตรงไหน”"
+         data-en="Helps us match your taste. Paste multiple example links, upload style images you like, and tell us what you like about them.">
+      ช่วยให้พี่ทำพอร์ตออกมาตรงใจน้องมากขึ้น วางลิงก์ตัวอย่างได้หลายลิงก์ อัปโหลดรูปสไตล์ที่ชอบได้ และบอกว่า “ชอบตรงไหน”</div>
+
+    <div class="field">
+      <label data-th="โทนสี/สไตล์ที่อยากได้" data-en="Colour tone / style you want">โทนสี/สไตล์ที่อยากได้</label>
+      <input type="text" data-k="โทนสีที่ชอบ" data-ph-th="พิมพ์เองได้เลย เช่น พาสเทลฟ้า-ขาว, มินิมอล, โทนเอิร์ธ, สีตามคณะ ฯลฯ" data-ph-en="Type freely, e.g. blue-white pastel, minimal, earth tones, faculty colours, etc.">
+    </div>
+
+    <div class="field">
+      <label data-th="ลิงก์ตัวอย่างที่ชอบ (Pinterest / เว็บ / ไฟล์)" data-en="Reference links you like (Pinterest / web / file)">ลิงก์ตัวอย่างที่ชอบ (Pinterest / เว็บ / ไฟล์)</label>
+      <div id="refLinkList"></div>
+      <button class="btn-add" id="addRefLinkBtn">＋ <span data-th="เพิ่มลิงก์" data-en="Add link">เพิ่มลิงก์</span></button>
+    </div>
+
+    <div class="field">
+      <label data-th="อัปโหลดรูปตัวอย่าง/ภาพสไตล์ที่ชอบ" data-en="Upload reference / style images you like">อัปโหลดรูปตัวอย่าง/ภาพสไตล์ที่ชอบ</label>
+      <div class="uploader">
+        <input type="file" id="refInput" accept="image/*" multiple style="display:none">
+        <div class="drop" id="refDrop"><span class="plus">＋</span><span data-th="แตะเพื่อเลือกรูปเรฟ (ใส่คำอธิบาย “ชอบตรงไหน” ใต้รูปได้)" data-en="Tap to add reference images (add 'what you like' under each)">แตะเพื่อเลือกรูปเรฟ (ใส่คำอธิบาย “ชอบตรงไหน” ใต้รูปได้)</span></div>
+        <div class="thumbs" id="refThumbs"></div>
+      </div>
+    </div>
+
+    <div class="field"><label data-th="ชอบตรงไหนของตัวอย่างพวกนี้? (โทนสี / เลย์เอาต์ / ฟอนต์ ฯลฯ)" data-en="What do you like about these? (colours / layout / fonts, etc.)">ชอบตรงไหนของตัวอย่างพวกนี้? (โทนสี / เลย์เอาต์ / ฟอนต์ ฯลฯ)</label><textarea data-k="ชอบตรงไหนของเรฟ"></textarea></div>
+    <div class="field"><label data-th="สิ่งที่ไม่ชอบ/อยากให้เลี่ยง" data-en="Anything you dislike / want to avoid">สิ่งที่ไม่ชอบ/อยากให้เลี่ยง</label><textarea data-k="สิ่งที่ไม่ชอบ"></textarea></div>
+  </div>
+
+  <!-- 13 EXISTING WORKS / DRIVE -->
+  <div class="page" data-num="13">
+    <h2>🗂️ <span data-th="ผลงานที่มีอยู่แล้ว / ลิงก์สำรอง" data-en="Existing works / backup link">ผลงานที่มีอยู่แล้ว / ลิงก์สำรอง</span></h2>
+    <div class="hint" data-th="ถ้ารูปเยอะมากจนอัปโหลดในฟอร์มไม่ไหว วางลิงก์ Google Drive (แชร์แบบ “ทุกคนที่มีลิงก์”) มาแทนก็ได้"
+         data-en="If you have too many photos to upload here, paste a Google Drive link (set to 'anyone with the link') instead.">
+      ถ้ารูปเยอะมากจนอัปโหลดในฟอร์มไม่ไหว วางลิงก์ Google Drive (แชร์แบบ “ทุกคนที่มีลิงก์”) มาแทนก็ได้</div>
+    <div class="field"><label data-th="ลิงก์ Google Drive / ลิงก์รูปภาพอื่นๆ" data-en="Google Drive / other image link">ลิงก์ Google Drive / ลิงก์รูปภาพอื่นๆ</label><input type="url" data-k="ลิงก์ไฟล์ผลงาน" data-ph-th="วางลิงก์ที่นี่" data-ph-en="paste link here"></div>
+    <div class="field"><label data-th="รายการไฟล์ที่จะส่งมาเพิ่มเติม" data-en="List of files you'll send separately">รายการไฟล์ที่จะส่งมาเพิ่มเติม</label><textarea data-k="รายการไฟล์เพิ่มเติม" data-ph-th="เช่น ใบเกียรติบัตร 5 ใบ, รูปกิจกรรม 10 รูป" data-ph-en="e.g. 5 certificates, 10 activity photos"></textarea></div>
+  </div>
+
+  <!-- ACTIONS -->
   <div class="actions">
-    <button id="sendBtn">🚀 ส่งข้อมูล</button>
-    <button id="copyBtn">📋 คัดลอกสรุปข้อมูลทั้งหมด</button>
-    <button id="resetBtn">ล้างข้อมูล</button>
+    <button id="sendBtn">📦 <span data-th="ส่งข้อมูล — สร้างไฟล์ ZIP (รูป + สรุป)" data-en="Submit — build ZIP file (photos + summary)">ส่งข้อมูล — สร้างไฟล์ ZIP (รูป + สรุป)</span></button>
+    <button id="copyBtn">📋 <span data-th="คัดลอกสรุปข้อมูลทั้งหมด" data-en="Copy full summary">คัดลอกสรุปข้อมูลทั้งหมด</span></button>
+    <button id="resetBtn"><span data-th="ล้างข้อมูล" data-en="Clear all">ล้างข้อมูล</span></button>
   </div>
   <div id="sendStatus"></div>
   <div id="copyStatus"></div>
+  <div class="save-tag" id="saveTag"></div>
   <div class="summary-box" id="summaryBox"></div>
 
 </div>
 
 <script>
-  const fields = document.querySelectorAll('[data-k]');
-  const chipGroups = document.querySelectorAll('[data-chip-group]');
-  const sections = ["ข้อมูลนักเรียน","เป้าหมาย","ผลการเรียน","กิจกรรม","ตัวตน","ผลงานเดิม","สไตล์","แพ็กเกจ"];
-  const progressBar = document.getElementById('progressBar');
-  sections.forEach(s=>{
-    const el = document.createElement('span');
-    el.textContent = s;
-    el.dataset.section = s;
-    progressBar.appendChild(el);
-  });
+/* =========================================================
+   TCAS Portfolio Form — static, GitHub Pages friendly
+   Persistence: text -> localStorage, images -> IndexedDB
+   Export: JSZip (images + ข้อมูล.txt, foldered by category)
+   ========================================================= */
+(function(){
+  "use strict";
 
-  chipGroups.forEach(group=>{
-    const single = group.dataset.single === "true";
-    group.querySelectorAll('.chip').forEach(chip=>{
-      chip.addEventListener('click', (e)=>{
-        e.preventDefault();
-        const input = chip.querySelector('input');
-        if(single){
-          group.querySelectorAll('.chip').forEach(c=>{c.classList.remove('checked'); c.querySelector('input').checked=false;});
-          input.checked = true;
-          chip.classList.add('checked');
-        } else {
-          input.checked = !input.checked;
-          chip.classList.toggle('checked', input.checked);
-        }
+  var LS_KEY = 'tcas_portfolio_v2';
+  var lang = 'th';
+
+  /* ---------- tiny i18n dict for JS-generated strings ---------- */
+  var T = {
+    activity_topic:   {th:'ชื่อหัวข้อกิจกรรม', en:'Activity topic name'},
+    add_photos:       {th:'แตะเพื่อเพิ่มรูป (เลือกหลายรูปได้)', en:'Tap to add photos (multiple allowed)'},
+    caption:          {th:'คำอธิบายใต้ภาพ (ทำอะไร บทบาทอะไร ปีไหน)', en:'Caption (what you did, your role, the year)'},
+    award_name:       {th:'ชื่อรางวัล / เกียรติบัตร', en:'Award / certificate name'},
+    year:             {th:'ปีที่ได้', en:'Year'},
+    short_desc:       {th:'คำอธิบายสั้นๆ', en:'Short description'},
+    what_you_like:    {th:'ชอบตรงไหนของรูปนี้', en:'What you like about this'},
+    section_title:    {th:'ชื่อหัวข้อ', en:'Section title'},
+    section_content:  {th:'เนื้อหา', en:'Content'},
+    ref_link:         {th:'วางลิงก์ตัวอย่าง', en:'Paste a reference link'},
+    remove:           {th:'ลบ', en:'Remove'},
+    up:               {th:'▲ ขึ้น', en:'▲ Up'},
+    down:             {th:'▼ ลง', en:'▼ Down'},
+    del_topic:        {th:'ลบหัวข้อนี้', en:'Delete topic'},
+    building:         {th:'กำลังสร้างไฟล์ ZIP... รอสักครู่นะครับ/คะ ⏳', en:'Building your ZIP file... please wait ⏳'},
+    zip_done:         {th:'สร้างไฟล์ ZIP เรียบร้อย! ไฟล์กำลังดาวน์โหลด ส่งไฟล์นี้กลับมาให้พี่ได้เลยครับ/คะ ✅', en:'ZIP created! It is downloading now — just send this file back to us ✅'},
+    zip_fail:         {th:'สร้าง ZIP ไม่สำเร็จ กรุณากดปุ่ม “คัดลอกสรุปข้อมูล” แล้วส่งข้อความให้พี่แทนนะครับ/คะ', en:'Could not build ZIP. Please use “Copy full summary” and send the text instead.'},
+    no_jszip:         {th:'โหลดตัวสร้าง ZIP ไม่ได้ (อาจเน็ตช้า) ลองรีเฟรชหน้า หรือกดคัดลอกสรุปข้อมูลแทนนะครับ/คะ', en:'ZIP library failed to load (slow network). Try refreshing, or use Copy summary instead.'},
+    copied:           {th:'คัดลอกแล้ว! ส่งกลับมาทาง LINE หรืออีเมลได้เลยครับ ✅', en:'Copied! Send it back via LINE or email ✅'},
+    copy_manual:      {th:'คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความด้านล่างแล้วคัดลอกเอง', en:'Auto-copy failed. Please select the text below and copy manually.'},
+    saved:            {th:'💾 บันทึกอัตโนมัติแล้ว', en:'💾 Saved automatically'},
+    validate:         {th:'ขอข้อมูลนี้ก่อนส่งนะครับ/คะ: ', en:'Please fill these before submitting: '},
+    v_name:           {th:'ชื่อ-นามสกุล', en:'Full name'},
+    v_contact:        {th:'ช่องทางติดต่ออย่างน้อย 1 อย่าง (เบอร์/LINE/อีเมล)', en:'at least one contact (phone/LINE/email)'},
+    v_target:         {th:'คณะ/สาขา และมหาวิทยาลัย อันดับ 1', en:'faculty/major and university (1st choice)'},
+    confirm_reset:    {th:'ล้างข้อมูลทั้งหมดที่กรอกไว้? (รวมรูปที่อัปโหลด)', en:'Clear everything you filled in? (including uploaded photos)'}
+  };
+  function t(k){ return (T[k]||{})[lang] || (T[k]||{}).th || k; }
+
+  /* ---------- IndexedDB (image blobs) ---------- */
+  var idb = null;
+  function openDB(){
+    return new Promise(function(res){
+      try{
+        var r = indexedDB.open('tcas_portfolio_img', 1);
+        r.onupgradeneeded = function(e){ e.target.result.createObjectStore('imgs'); };
+        r.onsuccess = function(e){ idb = e.target.result; res(idb); };
+        r.onerror = function(){ res(null); };
+      }catch(e){ res(null); }
+    });
+  }
+  function idbPut(id, blob){ try{ if(!idb) return; idb.transaction('imgs','readwrite').objectStore('imgs').put(blob, id); }catch(e){} }
+  function idbDel(id){ try{ if(!idb) return; idb.transaction('imgs','readwrite').objectStore('imgs').delete(id); }catch(e){} }
+  function idbGet(id){
+    return new Promise(function(res){
+      try{ var rq = idb.transaction('imgs','readonly').objectStore('imgs').get(id);
+        rq.onsuccess=function(){res(rq.result||null);}; rq.onerror=function(){res(null);};
+      }catch(e){ res(null); }
+    });
+  }
+  function idbClear(){ try{ if(!idb) return; idb.transaction('imgs','readwrite').objectStore('imgs').clear(); }catch(e){} }
+
+  /* in-memory blob cache: id -> File/Blob */
+  var blobs = {};
+
+  /* ---------- app state (persisted to localStorage) ---------- */
+  var state = {
+    lang: null,
+    activities: [],   // [{id,title,builtin,images:[{id,name,caption}]}]
+    certificates: [], // [{id,name(caption award),year,desc, img:{id,name}}] -> we store images list
+    certImgs: [],     // [{id,name,award,year,desc}]
+    custom: [],       // [{id,title,content,images:[{id,name,caption}]}]
+    refLinks: [],     // [strings]
+    refImgs: []       // [{id,name,note}]
+  };
+
+  var DEFAULT_ACTIVITIES = [
+    {th:'กิจกรรมบำเพ็ญประโยชน์ / จิตอาสา', en:'Volunteer / Community Service'},
+    {th:'กิจกรรมพัฒนาทักษะผู้นำ', en:'Leadership'},
+    {th:'กิจกรรมวิชาการ / การแข่งขัน', en:'Academic / Competition'},
+    {th:'กิจกรรมศิลปะ / ดนตรี / กีฬา', en:'Arts / Music / Sports'},
+    {th:'กิจกรรมค่าย / อบรม / โครงการ', en:'Camps / Training / Projects'}
+  ];
+
+  function uid(){ return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+  /* ---------- localStorage save/load (text only) ---------- */
+  var saveTimer=null;
+  function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow, 400); }
+  function saveNow(){
+    var f = {};
+    document.querySelectorAll('[data-k]').forEach(function(el){ f[el.dataset.k]=el.value; });
+    var chips = {};
+    document.querySelectorAll('[data-chip-group]').forEach(function(g){
+      chips[g.dataset.chipGroup] = [].slice.call(g.querySelectorAll('input:checked')).map(function(i){return i.value;});
+    });
+    var payload = { lang:lang, fields:f, chips:chips, state:state, ts:Date.now() };
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(payload)); }catch(e){}
+    var st=document.getElementById('saveTag'); if(st) st.textContent = t('saved');
+    updateProgress();
+  }
+
+  function loadSaved(){
+    var raw; try{ raw = localStorage.getItem(LS_KEY); }catch(e){ raw=null; }
+    if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(e){ return null; }
+  }
+
+  /* =========================================================
+     IMAGE UPLOADER helpers
+     ========================================================= */
+  function fileToBlobEntry(file){
+    var id = uid();
+    blobs[id] = file;
+    idbPut(id, file);
+    return { id:id, name:file.name };
+  }
+  function previewURL(id){
+    var b = blobs[id]; if(!b) return null;
+    try{ return URL.createObjectURL(b); }catch(e){ return null; }
+  }
+
+  /* generic thumb renderer: opts={list, container, fields:[{key,ph}], onchange, reorder} */
+  function renderThumbs(container, list, fieldDefs, onChange){
+    container.innerHTML='';
+    list.forEach(function(item, idx){
+      var card = document.createElement('div'); card.className='thumb';
+      var wrap = document.createElement('div'); wrap.className='imgwrap';
+      var url = previewURL(item.id);
+      if(url){
+        var img = document.createElement('img'); img.src=url; img.alt=item.name||'';
+        img.onerror=function(){ wrap.innerHTML='<div class="fname">'+(item.name||'')+'</div>'; };
+        wrap.appendChild(img);
+      } else {
+        wrap.innerHTML='<div class="fname">'+(item.name||'image')+'</div>';
+      }
+      card.appendChild(wrap);
+
+      var meta = document.createElement('div'); meta.className='meta';
+      fieldDefs.forEach(function(fd){
+        var input;
+        if(fd.area){ input=document.createElement('textarea'); input.rows=2; }
+        else { input=document.createElement('input'); input.type='text'; }
+        input.placeholder = fd.ph();
+        input.value = item[fd.key]||'';
+        input.addEventListener('input', function(){ item[fd.key]=input.value; onChange(); });
+        meta.appendChild(input);
+      });
+      card.appendChild(meta);
+
+      var bar = document.createElement('div'); bar.className='bar';
+      var up=document.createElement('button'); up.className='move-btn'; up.textContent=t('up');
+      up.onclick=function(){ if(idx>0){ list.splice(idx-1,0,list.splice(idx,1)[0]); onChange(true); } };
+      var down=document.createElement('button'); down.className='move-btn'; down.textContent=t('down');
+      down.onclick=function(){ if(idx<list.length-1){ list.splice(idx+1,0,list.splice(idx,1)[0]); onChange(true); } };
+      var del=document.createElement('button'); del.className='btn-danger'; del.textContent='🗑 '+t('remove');
+      del.onclick=function(){ idbDel(item.id); delete blobs[item.id]; var i=list.indexOf(item); if(i>-1) list.splice(i,1); onChange(true); };
+      bar.appendChild(up); bar.appendChild(down); bar.appendChild(del);
+      card.appendChild(bar);
+      container.appendChild(card);
+    });
+  }
+
+  /* =========================================================
+     COVER PHOTO
+     ========================================================= */
+  var coverImg = null; // {id,name}
+  function renderCover(){
+    var box = document.getElementById('coverPreview'); box.innerHTML='';
+    if(coverImg){
+      var url = previewURL(coverImg.id);
+      var img=document.createElement('img'); if(url) img.src=url; img.alt='cover';
+      box.appendChild(img);
+      var del=document.createElement('button'); del.className='btn-danger'; del.style.marginTop='6px'; del.textContent='🗑 '+t('remove');
+      del.onclick=function(){ idbDel(coverImg.id); delete blobs[coverImg.id]; coverImg=null; state.coverImg=null; renderCover(); saveNow(); };
+      box.appendChild(del);
+    }
+  }
+  function setupCover(){
+    var input=document.getElementById('coverInput');
+    document.getElementById('coverDrop').onclick=function(){ input.click(); };
+    input.onchange=function(){
+      if(!input.files||!input.files[0]) return;
+      if(coverImg){ idbDel(coverImg.id); delete blobs[coverImg.id]; }
+      coverImg = fileToBlobEntry(input.files[0]);
+      state.coverImg = coverImg;
+      renderCover(); saveNow(); input.value='';
+    };
+  }
+
+  /* =========================================================
+     ACTIVITIES (Category A)
+     ========================================================= */
+  function renderActivities(){
+    var host=document.getElementById('activityList'); host.innerHTML='';
+    state.activities.forEach(function(act){
+      var block=document.createElement('div'); block.className='sub-block';
+      var head=document.createElement('div'); head.className='sub-head';
+      var titleInput=document.createElement('input'); titleInput.type='text';
+      titleInput.value=act.title||''; titleInput.placeholder=t('activity_topic');
+      titleInput.style.fontWeight='700';
+      titleInput.addEventListener('input',function(){ act.title=titleInput.value; scheduleSave(); });
+      head.appendChild(titleInput);
+      if(!act.builtin){
+        var delTopic=document.createElement('button'); delTopic.className='btn-danger'; delTopic.style.flexShrink='0'; delTopic.textContent='🗑';
+        delTopic.title=t('del_topic');
+        delTopic.onclick=function(){
+          act.images.forEach(function(im){ idbDel(im.id); delete blobs[im.id]; });
+          var i=state.activities.indexOf(act); if(i>-1) state.activities.splice(i,1);
+          renderActivities(); saveNow();
+        };
+        head.appendChild(delTopic);
+      }
+      block.appendChild(head);
+
+      // uploader
+      var up=document.createElement('div'); up.className='uploader';
+      var fi=document.createElement('input'); fi.type='file'; fi.accept='image/*'; fi.multiple=true; fi.style.display='none';
+      var drop=document.createElement('div'); drop.className='drop';
+      drop.innerHTML='<span class="plus">＋</span>'+t('add_photos');
+      drop.onclick=function(){ fi.click(); };
+      var thumbs=document.createElement('div'); thumbs.className='thumbs';
+      fi.onchange=function(){
+        [].slice.call(fi.files).forEach(function(f){ var e=fileToBlobEntry(f); e.caption=''; act.images.push(e); });
+        fi.value=''; drawThumbs();
+      };
+      function drawThumbs(){
+        renderThumbs(thumbs, act.images, [{key:'caption', ph:function(){return t('caption');}, area:true}],
+          function(rerender){ if(rerender) drawThumbs(); scheduleSave(); });
+      }
+      up.appendChild(fi); up.appendChild(drop); up.appendChild(thumbs);
+      block.appendChild(up);
+      host.appendChild(block);
+      drawThumbs();
+    });
+    applyLang();
+  }
+  function addActivity(title, builtin){
+    state.activities.push({id:uid(), title:title||'', builtin:!!builtin, images:[]});
+  }
+
+  /* =========================================================
+     CERTIFICATES (Category B)
+     ========================================================= */
+  function setupCert(){
+    var input=document.getElementById('certInput');
+    document.getElementById('certDrop').onclick=function(){ input.click(); };
+    input.onchange=function(){
+      [].slice.call(input.files).forEach(function(f){ var e=fileToBlobEntry(f); e.award=''; e.year=''; e.desc=''; state.certImgs.push(e); });
+      input.value=''; renderCerts();
+    };
+  }
+  function renderCerts(){
+    renderThumbs(document.getElementById('certThumbs'), state.certImgs,
+      [ {key:'award', ph:function(){return t('award_name');}},
+        {key:'year',  ph:function(){return t('year');}},
+        {key:'desc',  ph:function(){return t('short_desc');}, area:true} ],
+      function(rerender){ if(rerender) renderCerts(); scheduleSave(); });
+    applyLang();
+  }
+
+  /* =========================================================
+     CUSTOM SECTIONS
+     ========================================================= */
+  function renderCustom(){
+    var host=document.getElementById('customList'); host.innerHTML='';
+    state.custom.forEach(function(sec){
+      var block=document.createElement('div'); block.className='sub-block';
+      var head=document.createElement('div'); head.className='sub-head';
+      var ti=document.createElement('input'); ti.type='text'; ti.value=sec.title||''; ti.placeholder=t('section_title'); ti.style.fontWeight='700';
+      ti.addEventListener('input',function(){ sec.title=ti.value; scheduleSave(); });
+      var del=document.createElement('button'); del.className='btn-danger'; del.style.flexShrink='0'; del.textContent='🗑';
+      del.onclick=function(){ sec.images.forEach(function(im){ idbDel(im.id); delete blobs[im.id]; }); var i=state.custom.indexOf(sec); if(i>-1) state.custom.splice(i,1); renderCustom(); saveNow(); };
+      head.appendChild(ti); head.appendChild(del); block.appendChild(head);
+
+      var ta=document.createElement('textarea'); ta.placeholder=t('section_content'); ta.value=sec.content||''; ta.style.marginBottom='10px';
+      ta.addEventListener('input',function(){ sec.content=ta.value; scheduleSave(); });
+      block.appendChild(ta);
+
+      var up=document.createElement('div'); up.className='uploader';
+      var fi=document.createElement('input'); fi.type='file'; fi.accept='image/*'; fi.multiple=true; fi.style.display='none';
+      var drop=document.createElement('div'); drop.className='drop'; drop.innerHTML='<span class="plus">＋</span>'+t('add_photos'); drop.onclick=function(){ fi.click(); };
+      var thumbs=document.createElement('div'); thumbs.className='thumbs';
+      fi.onchange=function(){ [].slice.call(fi.files).forEach(function(f){ var e=fileToBlobEntry(f); e.caption=''; sec.images.push(e); }); fi.value=''; drawThumbs(); };
+      function drawThumbs(){ renderThumbs(thumbs, sec.images, [{key:'caption', ph:function(){return t('caption');}, area:true}], function(r){ if(r) drawThumbs(); scheduleSave(); }); }
+      up.appendChild(fi); up.appendChild(drop); up.appendChild(thumbs);
+      block.appendChild(up);
+      host.appendChild(block);
+      drawThumbs();
+    });
+    applyLang();
+  }
+
+  /* =========================================================
+     REFERENCE LINKS + IMAGES
+     ========================================================= */
+  function renderRefLinks(){
+    var host=document.getElementById('refLinkList'); host.innerHTML='';
+    state.refLinks.forEach(function(v, idx){
+      var wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='6px'; wrap.style.marginBottom='6px';
+      var inp=document.createElement('input'); inp.type='url'; inp.value=v; inp.placeholder=t('ref_link');
+      inp.addEventListener('input',function(){ state.refLinks[idx]=inp.value; scheduleSave(); });
+      var del=document.createElement('button'); del.className='btn-danger'; del.style.flexShrink='0'; del.textContent='🗑';
+      del.onclick=function(){ state.refLinks.splice(idx,1); renderRefLinks(); saveNow(); };
+      wrap.appendChild(inp); wrap.appendChild(del); host.appendChild(wrap);
+    });
+  }
+  function setupRef(){
+    var input=document.getElementById('refInput');
+    document.getElementById('refDrop').onclick=function(){ input.click(); };
+    input.onchange=function(){ [].slice.call(input.files).forEach(function(f){ var e=fileToBlobEntry(f); e.note=''; state.refImgs.push(e); }); input.value=''; renderRefImgs(); };
+  }
+  function renderRefImgs(){
+    renderThumbs(document.getElementById('refThumbs'), state.refImgs,
+      [{key:'note', ph:function(){return t('what_you_like');}, area:true}],
+      function(r){ if(r) renderRefImgs(); scheduleSave(); });
+    applyLang();
+  }
+
+  /* =========================================================
+     CHIPS
+     ========================================================= */
+  function setupChips(){
+    document.querySelectorAll('[data-chip-group]').forEach(function(group){
+      var single = group.dataset.single==='true';
+      group.querySelectorAll('.chip').forEach(function(chip){
+        chip.addEventListener('click', function(e){
+          e.preventDefault();
+          var input=chip.querySelector('input');
+          if(single){
+            group.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('checked'); c.querySelector('input').checked=false; });
+            input.checked=true; chip.classList.add('checked');
+          } else {
+            input.checked=!input.checked; chip.classList.toggle('checked', input.checked);
+          }
+          saveNow();
+        });
       });
     });
-  });
+  }
+
+  /* =========================================================
+     LANGUAGE
+     ========================================================= */
+  function applyLang(){
+    document.documentElement.lang = (lang==='en'?'en':'th');
+    document.querySelectorAll('[data-th]').forEach(function(el){
+      var v = el.dataset[lang]; if(v!==undefined && v!==null) el.textContent=v;
+    });
+    document.querySelectorAll('[data-ph-th]').forEach(function(el){
+      el.placeholder = (lang==='en') ? el.dataset.phEn : el.dataset.phTh;
+    });
+    document.querySelectorAll('#langToggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.set===lang); });
+  }
+  function setLang(l){ lang=(l==='en'?'en':'th'); applyLang(); saveNow(); }
+
+  /* =========================================================
+     PROGRESS
+     ========================================================= */
+  function updateProgress(){
+    var els=document.querySelectorAll('[data-k]');
+    var total=els.length, filled=0;
+    els.forEach(function(el){ if((el.value||'').trim()) filled++; });
+    // bonus: images present counts
+    var imgCount = (coverImg?1:0)+state.certImgs.length+state.refImgs.length
+      + state.activities.reduce(function(a,x){return a+x.images.length;},0)
+      + state.custom.reduce(function(a,x){return a+x.images.length;},0);
+    total += 3; if(imgCount>0) filled += Math.min(3, imgCount);
+    var pct = total? Math.round(filled/total*100):0; if(pct>100)pct=100;
+    document.getElementById('progressFill').style.width=pct+'%';
+    document.getElementById('progressPct').textContent=pct+'%';
+  }
+
+  /* =========================================================
+     SUMMARY TEXT
+     ========================================================= */
+  function qesc(s){ return String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"'); }
+  function getField(k){ var el=document.querySelector('[data-k="'+qesc(k)+'"]'); return el?(el.value||'').trim():''; }
 
   function buildSummary(){
-    let lines = [];
-    lines.push("=== สรุปข้อมูลทำพอร์ต ===");
-    fields.forEach(f=>{
-      const val = f.value.trim();
-      if(val) lines.push(f.dataset.k + ": " + val);
-    });
-    chipGroups.forEach(group=>{
-      const checked = [...group.querySelectorAll('input:checked')].map(i=>i.value);
-      if(checked.length) lines.push(group.dataset.chipGroup + ": " + checked.join(", "));
-    });
-    return lines.join("\n");
-  }
+    var L=[];
+    L.push('=========================================');
+    L.push('   สรุปข้อมูลทำพอร์ต TCAS PORTFOLIO');
+    L.push('=========================================');
+    L.push('ภาษาที่ต้องการทำพอร์ต: '+(lang==='en'?'ภาษาอังกฤษ (English)':'ภาษาไทย (Thai)'));
+    L.push('');
 
-  function buildDataObject(){
-    const data = {};
-    fields.forEach(f=>{
-      data[f.dataset.k] = f.value.trim();
+    var groups = [
+      ['— ประวัติส่วนตัว —', ['ชื่อ-นามสกุล','ชื่อเล่น','วันเกิด','อายุ','เชื้อชาติ','สัญชาติ','ศาสนา','แผนการเรียน','งานอดิเรก','ความสามารถพิเศษ','ภาษาที่สื่อสารได้','คติประจำใจ']],
+      ['— ช่องทางติดต่อ —', ['เบอร์โทร','LINE ID','อีเมล','Instagram','Facebook']],
+      ['— ครอบครัว & ที่อยู่ —', ['ชื่อบิดา','อาชีพบิดา','ชื่อมารดา','อาชีพมารดา','จำนวนพี่น้อง','ที่อยู่ปัจจุบัน']],
+      ['— เป้าหมาย TCAS —', ['คณะอันดับ1','มหาวิทยาลัยอันดับ1','คณะอันดับ2','มหาวิทยาลัยอันดับ2']],
+      ['— การศึกษา & ผลการเรียน —', ['โรงเรียนประถม','โรงเรียนมัธยมต้น','โรงเรียนมัธยมปลาย','แผนการเรียนมัธยมปลาย','ระดับชั้น','GPAX','คะแนนสอบพิเศษ','วิชาที่ถนัด']],
+      ['— Statement of Purpose (SOP) —', ['SOP_1_Introduction','SOP_2_Academic','SOP_3_Experiences','SOP_4_WhyUni','SOP_5_Strengths','SOP_6_FutureGoals']],
+      ['— ตัวตนและเป้าหมาย —', ['จุดแข็ง','โปรเจกต์เด่น']],
+      ['— สไตล์ / เรฟ —', ['โทนสีที่ชอบ','ชอบตรงไหนของเรฟ','สิ่งที่ไม่ชอบ']],
+      ['— ผลงาน / ลิงก์สำรอง —', ['ลิงก์ไฟล์ผลงาน','รายการไฟล์เพิ่มเติม']]
+    ];
+    groups.forEach(function(g){
+      var lines=[];
+      g[1].forEach(function(k){ var v=getField(k); if(v) lines.push('  • '+k+': '+v); });
+      if(lines.length){ L.push(g[0]); L=L.concat(lines); L.push(''); }
     });
-    chipGroups.forEach(group=>{
-      const checked = [...group.querySelectorAll('input:checked')].map(i=>i.value);
-      data[group.dataset.chipGroup] = checked.join(", ");
+
+    // chips
+    document.querySelectorAll('[data-chip-group]').forEach(function(grp){
+      var checked=[].slice.call(grp.querySelectorAll('input:checked')).map(function(i){return i.value;});
+      if(checked.length) L.push('  • '+grp.dataset.chipGroup+': '+checked.join(', '));
     });
-    return data;
-  }
+    L.push('');
 
-  const SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby5gIKwaMUV80q4xyqg3acWLas0Dl5qhCYJUhQ8s4B1I-aZF2p3CVVYdiDSyVh2CiZM9Q/exec';
+    // cover
+    L.push('— รูปภาพในไฟล์ ZIP —');
+    L.push('รูปหน้าปก/: '+(coverImg?('1 รูป ('+coverImg.name+')'):'— ไม่มี —'));
+    L.push('');
 
-  document.getElementById('sendBtn').addEventListener('click', async ()=>{
-    const btn = document.getElementById('sendBtn');
-    const status = document.getElementById('sendStatus');
-    const data = buildDataObject();
-    btn.disabled = true;
-    status.style.color = 'var(--ink-soft)';
-    status.textContent = "กำลังส่งข้อมูล...";
-    try{
-      await fetch(SHEET_WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(data)
+    // activities
+    L.push('กิจกรรม/ :');
+    state.activities.forEach(function(a){
+      if(a.images.length===0) return;
+      L.push('  ▸ '+(a.title||'(ไม่ตั้งชื่อ)')+' — '+a.images.length+' รูป');
+      a.images.forEach(function(im,i){ L.push('      '+(i+1)+'. '+im.name+(im.caption?(' : '+im.caption):'')); });
+    });
+    L.push('');
+
+    // certificates
+    L.push('เกียรติบัตร/ : '+state.certImgs.length+' รูป');
+    state.certImgs.forEach(function(im,i){
+      var meta=[im.award,im.year,im.desc].filter(Boolean).join(' | ');
+      L.push('  '+(i+1)+'. '+im.name+(meta?(' : '+meta):''));
+    });
+    L.push('');
+
+    // custom
+    if(state.custom.length){
+      L.push('หัวข้อเพิ่มเติม/ :');
+      state.custom.forEach(function(s){
+        L.push('  ▸ '+(s.title||'(ไม่ตั้งชื่อ)'));
+        if((s.content||'').trim()) L.push('      '+s.content);
+        s.images.forEach(function(im,i){ L.push('      รูป '+(i+1)+'. '+im.name+(im.caption?(' : '+im.caption):'')); });
       });
-      status.style.color = 'var(--teal)';
-      status.textContent = "ส่งข้อมูลเรียบร้อยแล้ว ขอบคุณครับ/ค่ะ ✅";
-    }catch(e){
-      status.style.color = 'var(--margin-red)';
-      status.textContent = "ส่งข้อมูลไม่สำเร็จ กรุณากดปุ่ม \"คัดลอกสรุปข้อมูลทั้งหมด\" แล้วส่งข้อมูลให้พี่ทางช่องทางอื่นแทนนะครับ/คะ";
+      L.push('');
     }
-    setTimeout(()=>{ btn.disabled = false; }, 3000);
-  });
 
-  document.getElementById('copyBtn').addEventListener('click', async ()=>{
-    const text = buildSummary();
-    const box = document.getElementById('summaryBox');
-    box.textContent = text;
-    box.classList.add('open');
+    // references
+    if(state.refLinks.filter(Boolean).length || state.refImgs.length){
+      L.push('เรฟตัวอย่าง/ :');
+      state.refLinks.filter(Boolean).forEach(function(v){ L.push('  • ลิงก์: '+v); });
+      state.refImgs.forEach(function(im,i){ L.push('  รูป '+(i+1)+'. '+im.name+(im.note?(' : '+im.note):'')); });
+      L.push('');
+    }
+
+    return L.join('\n');
+  }
+
+  /* =========================================================
+     VALIDATION
+     ========================================================= */
+  function validate(){
+    var missing=[]; var firstEl=null;
+    function mark(sel, ok){ var el=document.querySelector(sel); if(el){ el.classList.toggle('invalid', !ok); if(!ok && !firstEl) firstEl=el; } }
+    var nameOk = !!getField('ชื่อ-นามสกุล'); mark('[data-k="ชื่อ-นามสกุล"]', nameOk);
+    if(!nameOk) missing.push(t('v_name'));
+    var contactOk = !!(getField('เบอร์โทร')||getField('LINE ID')||getField('อีเมล'));
+    mark('[data-k="เบอร์โทร"]', contactOk); mark('[data-k="LINE ID"]', contactOk); mark('[data-k="อีเมล"]', contactOk);
+    if(!contactOk) missing.push(t('v_contact'));
+    var facOk=!!getField('คณะอันดับ1'), uniOk=!!getField('มหาวิทยาลัยอันดับ1');
+    mark('[data-k="คณะอันดับ1"]', facOk); mark('[data-k="มหาวิทยาลัยอันดับ1"]', uniOk);
+    if(!facOk||!uniOk) missing.push(t('v_target'));
+    return { ok:missing.length===0, missing:missing, firstEl:firstEl };
+  }
+
+  /* =========================================================
+     ZIP EXPORT
+     ========================================================= */
+  function safeName(s){ return (s||'').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,' ').trim().slice(0,60) || 'untitled'; }
+
+  function buildZip(){
+    var status=document.getElementById('sendStatus');
+    if(typeof JSZip==='undefined'){ status.style.color='var(--margin-red)'; status.textContent=t('no_jszip'); return; }
+    var btn=document.getElementById('sendBtn'); btn.disabled=true;
+    status.style.color='var(--ink-soft)'; status.textContent=t('building');
+
+    var zip=new JSZip();
+    zip.file('ข้อมูล.txt', '﻿'+buildSummary());   // BOM for Thai in Notepad
+
+    if(coverImg && blobs[coverImg.id]) zip.folder('รูปหน้าปก').file(safeName(coverImg.name), blobs[coverImg.id]);
+
+    state.activities.forEach(function(a){
+      if(a.images.length===0) return;
+      var f=zip.folder('กิจกรรม').folder(safeName(a.title||'ไม่ตั้งชื่อ'));
+      a.images.forEach(function(im,i){ if(blobs[im.id]) f.file(String(i+1).padStart(2,'0')+'_'+safeName(im.name), blobs[im.id]); });
+    });
+
+    if(state.certImgs.length){
+      var cf=zip.folder('เกียรติบัตร');
+      state.certImgs.forEach(function(im,i){
+        if(!blobs[im.id]) return;
+        var pretty = safeName([im.award,im.year].filter(Boolean).join('_')||im.name);
+        cf.file(String(i+1).padStart(2,'0')+'_'+pretty+'_'+safeName(im.name), blobs[im.id]);
+      });
+    }
+
+    state.custom.forEach(function(s){
+      if(s.images.length===0) return;
+      var f=zip.folder('หัวข้อเพิ่มเติม').folder(safeName(s.title||'หัวข้อ'));
+      s.images.forEach(function(im,i){ if(blobs[im.id]) f.file(String(i+1).padStart(2,'0')+'_'+safeName(im.name), blobs[im.id]); });
+    });
+
+    if(state.refImgs.length){
+      var rf=zip.folder('เรฟตัวอย่าง');
+      state.refImgs.forEach(function(im,i){ if(blobs[im.id]) rf.file(String(i+1).padStart(2,'0')+'_'+safeName(im.name), blobs[im.id]); });
+    }
+
+    var studentName = safeName(getField('ชื่อ-นามสกุล')||'นักเรียน');
+    var submissionId = 'S'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    zip.generateAsync({type:'blob'}).then(function(content){
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(content);
+      a.download='portfolio_'+studentName+'.zip';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      btn.disabled=false;
+      // ส่งข้อความ + รูปทุกใบขึ้น Google Sheet/Drive (best-effort, ไม่บล็อกการดาวน์โหลด ZIP)
+      uploadToDrive(submissionId, getField('ชื่อ-นามสกุล')||'นักเรียน');
+    }).catch(function(){
+      status.style.color='var(--margin-red)'; status.textContent=t('zip_fail'); btn.disabled=false;
+    });
+  }
+
+  /* ---------- Google Apps Script endpoint (ต้องเป็น URL .../exec ที่ Deploy ใหม่) ---------- */
+  var SHEET_WEB_APP_URL='https://script.google.com/macros/s/AKfycby5gIKwaMUV80q4xyqg3acWLas0Dl5qhCYJUhQ8s4B1I-aZF2p3CVVYdiDSyVh2CiZM9Q/exec';
+
+  /* แปลง Blob เป็น base64 (ตัดส่วนหัว data:...;base64, ออก) */
+  function blobToBase64(blob){
+    return new Promise(function(res, rej){
+      var r=new FileReader();
+      r.onload=function(){ var s=String(r.result||''); var i=s.indexOf(','); res(i>=0? s.slice(i+1): s); };
+      r.onerror=function(){ rej(r.error); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  /* ย่อรูปใหญ่จากมือถือก่อนส่ง (กัน payload บวม/ส่งช้า) — ถ้าย่อไม่ได้ (เช่น HEIC) จะส่งไฟล์ต้นฉบับ */
+  function prepareImage(blob, filename){
+    return new Promise(function(resolve){
+      var MAXPX=1600, MAXBYTES=1.5*1024*1024;
+      // ถ้าไฟล์เล็กอยู่แล้ว หรือเบราว์เซอร์ decode ไม่ได้ ให้ส่งต้นฉบับ
+      function original(){
+        blobToBase64(blob).then(function(b64){
+          resolve({ dataBase64:b64, mime:(blob.type||'application/octet-stream'), filename:filename });
+        }).catch(function(){ resolve(null); });
+      }
+      if(blob.size<=MAXBYTES || !window.createImageBitmap){ return original(); }
+      createImageBitmap(blob).then(function(bmp){
+        var scale=Math.min(1, MAXPX/Math.max(bmp.width,bmp.height));
+        if(scale>=1){ bmp.close&&bmp.close(); return original(); }
+        var w=Math.round(bmp.width*scale), h=Math.round(bmp.height*scale);
+        var c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(bmp,0,0,w,h); bmp.close&&bmp.close();
+        c.toBlob(function(out){
+          if(!out){ return original(); }
+          var nf=filename.replace(/\.(png|jpg|jpeg|webp|heic|heif|gif|bmp)$/i,'')+'.jpg';
+          blobToBase64(out).then(function(b64){ resolve({ dataBase64:b64, mime:'image/jpeg', filename:nf }); })
+                           .catch(function(){ original(); });
+        },'image/jpeg',0.85);
+      }).catch(function(){ original(); });
+    });
+  }
+
+  /* รวบรวมรูปทุกใบทุกหมวด พร้อมข้อมูลกำกับ (หมวด = ชื่อโฟลเดอร์ย่อยใน Drive) */
+  function collectImages(){
+    var out=[];
+    if(coverImg && blobs[coverImg.id]) out.push({ id:coverImg.id, category:'รูปหน้าปก', order:1, title:'', detail:'', filename:coverImg.name });
+    state.activities.forEach(function(a){
+      a.images.forEach(function(im,i){ if(blobs[im.id]) out.push({ id:im.id, category:'กิจกรรม/'+(a.title||'ไม่ตั้งชื่อ'), order:i+1, title:(im.caption||''), detail:'', filename:im.name }); });
+    });
+    state.certImgs.forEach(function(im,i){
+      if(blobs[im.id]) out.push({ id:im.id, category:'เกียรติบัตร', order:i+1, title:(im.award||''), detail:[im.year,im.desc].filter(Boolean).join(' | '), filename:im.name });
+    });
+    state.custom.forEach(function(s){
+      s.images.forEach(function(im,i){ if(blobs[im.id]) out.push({ id:im.id, category:'หัวข้อเพิ่มเติม/'+(s.title||'หัวข้อ'), order:i+1, title:(im.caption||''), detail:'', filename:im.name }); });
+    });
+    state.refImgs.forEach(function(im,i){
+      if(blobs[im.id]) out.push({ id:im.id, category:'เรฟตัวอย่าง', order:i+1, title:(im.note||''), detail:'', filename:im.name });
+    });
+    return out;
+  }
+
+  function postJSON(payload){
+    return fetch(SHEET_WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  }
+
+  /* ส่งข้อความ (meta) 1 รอบ แล้วส่งรูปทีละใบขึ้น Drive — ผูกด้วย submissionId ให้ลิงก์ลงแถวเดียวกัน */
+  async function uploadToDrive(submissionId, studentName){
+    var status=document.getElementById('sendStatus');
+    var fields={}; document.querySelectorAll('[data-k]').forEach(function(el){ fields[el.dataset.k]=(el.value||'').trim(); });
+    var imgs=collectImages();
+
+    // รอบที่ 1: ส่งข้อความ (สร้าง/อัปเดตแถวในชีต + เตรียมโฟลเดอร์)
     try{
-      await navigator.clipboard.writeText(text);
-      document.getElementById('copyStatus').textContent = "คัดลอกแล้ว! ส่งกลับมาทาง LINE หรืออีเมลได้เลยครับ ✅";
-    }catch(e){
-      document.getElementById('copyStatus').textContent = "คัดลอกอัตโนมัติไม่ได้ กรุณากดเลือกข้อความด้านล่างแล้วคัดลอกเอง";
-    }
-  });
+      status.style.color='var(--ink-soft)';
+      status.textContent = (lang==='en'?'Sending data to Google Sheet...':'กำลังส่งข้อมูลขึ้น Google Sheet...');
+      await postJSON({ kind:'meta', submissionId:submissionId, studentName:studentName,
+                       lang:(lang==='en'?'อังกฤษ':'ไทย'), imageCount:imgs.length, fields:fields });
+    }catch(e){ /* no-cors อ่านผลไม่ได้ ถือว่าส่งแล้ว */ }
 
-  document.getElementById('resetBtn').addEventListener('click', ()=>{
-    if(confirm("ล้างข้อมูลทั้งหมดที่กรอกไว้?")){
-      fields.forEach(f=>f.value='');
-      chipGroups.forEach(g=>g.querySelectorAll('.chip').forEach(c=>{c.classList.remove('checked'); c.querySelector('input').checked=false;}));
-      document.getElementById('summaryBox').classList.remove('open');
-      document.getElementById('copyStatus').textContent='';
+    // รอบต่อไป: ส่งรูปทีละใบ (sequential กันข้อมูลใหญ่/กันโหลดพร้อมกัน)
+    var sent=0;
+    for(var i=0;i<imgs.length;i++){
+      var meta=imgs[i];
+      status.textContent = (lang==='en'?'Uploading photos to Google Drive ':'กำลังส่งรูปขึ้น Google Drive ')+(i+1)+'/'+imgs.length+' ⏳';
+      try{
+        var prepared=await prepareImage(blobs[meta.id], meta.filename||('image'+(i+1)));
+        if(!prepared) continue;
+        await postJSON({ kind:'image', submissionId:submissionId, studentName:studentName,
+                         category:meta.category, order:meta.order, title:meta.title, detail:meta.detail,
+                         filename:prepared.filename, mime:prepared.mime, dataBase64:prepared.dataBase64 });
+        sent++;
+        await new Promise(function(r){ setTimeout(r,150); }); // เว้นจังหวะเล็กน้อย
+      }catch(e){ /* ข้ามรูปที่ส่งไม่สำเร็จ */ }
     }
-  });
+
+    status.style.color='var(--teal)';
+    if(imgs.length===0){
+      status.textContent = (lang==='en'?'Data sent to Google Sheet! 🎉':'ส่งข้อมูลขึ้น Google Sheet เรียบร้อยแล้ว! 🎉');
+    }else{
+      status.textContent = (lang==='en'
+        ? ('Sent data + '+sent+'/'+imgs.length+' photos to Google Drive/Sheet! 🎉 (many photos may take a moment to appear in Drive)')
+        : ('ส่งข้อมูล + รูป '+sent+'/'+imgs.length+' ใบ ขึ้น Google Drive/Sheet เรียบร้อยแล้ว! 🎉 (ถ้ารูปเยอะอาจใช้เวลาสักครู่ให้ขึ้นครบใน Drive)'));
+    }
+  }
+
+  /* =========================================================
+     WIRING
+     ========================================================= */
+  function wireInputs(){
+    document.querySelectorAll('[data-k]').forEach(function(el){ el.addEventListener('input', scheduleSave); el.addEventListener('change', scheduleSave); });
+  }
+
+  function doReset(){
+    if(!confirm(t('confirm_reset'))) return;
+    document.querySelectorAll('[data-k]').forEach(function(el){ el.value=''; el.classList.remove('invalid'); });
+    document.querySelectorAll('[data-chip-group] .chip').forEach(function(c){ c.classList.remove('checked'); c.querySelector('input').checked=false; });
+    Object.keys(blobs).forEach(function(id){ delete blobs[id]; });
+    idbClear();
+    coverImg=null;
+    state.activities=[]; DEFAULT_ACTIVITIES.forEach(function(d){ addActivity(d[lang]||d.th, true); });
+    state.certImgs=[]; state.custom=[]; state.refLinks=[]; state.refImgs=[]; state.coverImg=null;
+    try{ localStorage.removeItem(LS_KEY); }catch(e){}
+    renderCover(); renderActivities(); renderCerts(); renderCustom(); renderRefLinks(); renderRefImgs();
+    document.getElementById('summaryBox').classList.remove('open');
+    document.getElementById('copyStatus').textContent=''; document.getElementById('sendStatus').textContent='';
+    document.getElementById('saveTag').textContent='';
+    updateProgress();
+  }
+
+  async function restoreImages(){
+    // pull known image ids from state into blob cache
+    var ids=[];
+    if(state.coverImg) ids.push(state.coverImg);
+    state.activities.forEach(function(a){ a.images.forEach(function(im){ids.push(im);}); });
+    state.certImgs.forEach(function(im){ids.push(im);});
+    state.custom.forEach(function(s){ s.images.forEach(function(im){ids.push(im);}); });
+    state.refImgs.forEach(function(im){ids.push(im);});
+    for(var i=0;i<ids.length;i++){ var b=await idbGet(ids[i].id); if(b) blobs[ids[i].id]=b; }
+  }
+
+  async function init(){
+    await openDB();
+    setupChips(); setupCover(); setupCert(); setupRef();
+    wireInputs();
+
+    var saved=loadSaved();
+    if(saved){
+      lang = saved.lang || 'th';
+      if(saved.fields){ Object.keys(saved.fields).forEach(function(k){ var el=document.querySelector('[data-k="'+qesc(k)+'"]'); if(el) el.value=saved.fields[k]; }); }
+      if(saved.chips){ Object.keys(saved.chips).forEach(function(gk){
+        var g=document.querySelector('[data-chip-group="'+qesc(gk)+'"]'); if(!g) return;
+        (saved.chips[gk]||[]).forEach(function(v){ var inp=g.querySelector('input[value="'+qesc(v)+'"]'); if(inp){ inp.checked=true; inp.closest('.chip').classList.add('checked'); } });
+      }); }
+      if(saved.state){
+        state = Object.assign(state, saved.state);
+        state.activities = saved.state.activities || [];
+        state.certImgs   = saved.state.certImgs   || [];
+        state.custom     = saved.state.custom     || [];
+        state.refLinks   = saved.state.refLinks   || [];
+        state.refImgs    = saved.state.refImgs    || [];
+        coverImg = saved.state.coverImg || null;
+      }
+    }
+    if(!state.activities || state.activities.length===0){
+      state.activities=[]; DEFAULT_ACTIVITIES.forEach(function(d){ addActivity(d[lang]||d.th, true); });
+    }
+
+    await restoreImages();
+
+    renderCover(); renderActivities(); renderCerts(); renderCustom(); renderRefLinks(); renderRefImgs();
+    applyLang(); updateProgress();
+
+    // language gate: only show if no saved language
+    var gate=document.getElementById('gate');
+    if(saved && saved.lang){ gate.classList.add('hidden'); }
+    else{ gate.classList.remove('hidden'); }
+
+    // gate buttons
+    document.querySelectorAll('.lang-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        setLang(b.dataset.choose);
+        gate.classList.add('hidden');
+      });
+    });
+    // top toggle
+    document.querySelectorAll('#langToggle button').forEach(function(b){ b.addEventListener('click', function(){ setLang(b.dataset.set); }); });
+
+    // add buttons
+    document.getElementById('addActivityBtn').onclick=function(){ addActivity('', false); renderActivities(); saveNow(); };
+    document.getElementById('addCustomBtn').onclick=function(){ state.custom.push({id:uid(),title:'',content:'',images:[]}); renderCustom(); saveNow(); };
+    document.getElementById('addRefLinkBtn').onclick=function(){ state.refLinks.push(''); renderRefLinks(); saveNow(); };
+
+    // actions
+    document.getElementById('sendBtn').onclick=function(){
+      var v=validate();
+      var status=document.getElementById('sendStatus');
+      if(!v.ok){
+        status.style.color='var(--margin-red)';
+        status.textContent=t('validate')+v.missing.join(' · ');
+        if(v.firstEl) v.firstEl.scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+      buildZip();
+    };
+    document.getElementById('copyBtn').onclick=async function(){
+      var text=buildSummary();
+      var box=document.getElementById('summaryBox'); box.textContent=text; box.classList.add('open');
+      try{ await navigator.clipboard.writeText(text); document.getElementById('copyStatus').textContent=t('copied'); }
+      catch(e){ document.getElementById('copyStatus').textContent=t('copy_manual'); }
+    };
+    document.getElementById('resetBtn').onclick=doReset;
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
 </script>
 </body>
 </html>
